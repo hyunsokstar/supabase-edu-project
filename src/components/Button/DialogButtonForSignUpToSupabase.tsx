@@ -14,9 +14,11 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Loader2, Eye, EyeOff, UserPlus } from 'lucide-react';
-import * as z from 'zod';  // Zod 라이브러리 추가
-import { toast } from 'react-toastify';  // react-toastify 임포트
+import * as z from 'zod';
+import { toast } from 'react-toastify';
+import { v4 as uuidv4 } from 'uuid';
 import CommonOutlinedButton from '../Common/CommonOutlinedButton';
+import { uploadImageToS3 } from '@/lib/uploadImageToS3';
 
 interface DialogButtonForSignUpToSupabaseProps {
     supabase: SupabaseClient;
@@ -27,6 +29,9 @@ const signUpSchema = z.object({
     email: z.string().email("유효한 이메일을 입력하세요."),
     password: z.string().min(6, "비밀번호는 최소 6자 이상이어야 합니다."),
     confirmPassword: z.string(),
+    phoneNumber: z.string().optional(), // 프로필 필드 추가
+    githubUrl: z.string().optional(),
+    userImage: z.any().optional(),      // 프로필 이미지 필드 추가
 }).refine((data) => data.password === data.confirmPassword, {
     message: "비밀번호가 일치하지 않습니다.",
     path: ["confirmPassword"],
@@ -36,12 +41,25 @@ const DialogButtonForSignUpToSupabase: React.FC<DialogButtonForSignUpToSupabaseP
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [confirmPassword, setConfirmPassword] = useState<string>('');
+    const [phoneNumber, setPhoneNumber] = useState<string>('');
+    const [githubUrl, setGithubUrl] = useState<string>('');
+    const [userImage, setUserImage] = useState<File | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string>('');
-    const [fieldErrors, setFieldErrors] = useState<z.ZodIssue[]>([]);  // Zod 오류 처리
+    const [fieldErrors, setFieldErrors] = useState<z.ZodIssue[]>([]);
     const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+
+    // Presigned URL을 가져오는 함수
+    const fetchPresignedUrl = async (fileName: string, folder: string): Promise<{ signedUrl: string, fileUrl: string }> => {
+        const res = await fetch(`/api/get-upload-url?file=${fileName}&folder=${folder}`);
+        if (!res.ok) {
+            throw new Error('Presigned URL 가져오기 실패');
+        }
+        const data = await res.json();
+        return { signedUrl: data.url, fileUrl: data.fileUrl };
+    };
 
     const handleSignUp = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
@@ -51,28 +69,61 @@ const DialogButtonForSignUpToSupabase: React.FC<DialogButtonForSignUpToSupabaseP
             email,
             password,
             confirmPassword,
+            phoneNumber,
+            githubUrl,
+            userImage
         });
 
         if (!validationResult.success) {
-            setFieldErrors(validationResult.error.issues); // 오류 메시지 설정
+            setFieldErrors(validationResult.error.issues);
             setErrorMessage("입력한 정보를 다시 확인하세요.");
             return;
         }
 
-        setFieldErrors([]); // 오류 초기화
+        setFieldErrors([]);
         setLoading(true);
         setErrorMessage('');
 
         try {
-            const { error } = await supabase.auth.signUp({
+            // 1. Presigned URL 요청 후 파일 업로드
+            let userImageUrl = null;
+            if (userImage) {
+                const fileExtension = userImage.name.split('.').pop() || 'jpg';
+                const fileName = `${email}-${uuidv4()}.${fileExtension}`;
+                const { signedUrl, fileUrl } = await fetchPresignedUrl(fileName, 'profiles');
+
+                await uploadImageToS3(userImage, signedUrl); // 이미지 업로드
+                userImageUrl = fileUrl; // 업로드된 이미지 URL
+            }
+
+            // 2. auth.users에 사용자 추가
+            const { data: signUpData, error } = await supabase.auth.signUp({
                 email,
                 password,
             });
 
             if (error) throw error;
 
+            const userId = signUpData?.user?.id;
+
+            // 3. profile 테이블에 데이터 추가
+            if (userId) {
+                const { error: profileError } = await supabase.from('profile').insert({
+                    user_id: userId,
+                    phone_number: phoneNumber,
+                    github_url: githubUrl,
+                    user_image: userImageUrl,
+                    current_task: 'N/A',
+                    today_completed_tasks_count: 0,
+                });
+
+                if (profileError) {
+                    throw profileError;
+                }
+            }
+
             setIsDialogOpen(false);
-            toast.success('회원가입이 완료되었습니다. 이메일을 확인해 주세요!', { // 성공 토스트 메시지
+            toast.success('회원가입이 완료되었습니다. 이메일을 확인해 주세요!', {
                 position: "top-center",
                 autoClose: 3000,
                 hideProgressBar: false,
@@ -84,15 +135,24 @@ const DialogButtonForSignUpToSupabase: React.FC<DialogButtonForSignUpToSupabaseP
             setEmail('');
             setPassword('');
             setConfirmPassword('');
+            setPhoneNumber('');
+            setGithubUrl('');
+            setUserImage(null);
         } catch (error: any) {
             setErrorMessage(error.message);
         } finally {
             setLoading(false);
         }
-    }, [email, password, confirmPassword, supabase]);
+    }, [email, password, confirmPassword, supabase, phoneNumber, githubUrl, userImage]);
 
     const togglePasswordVisibility = () => setShowPassword(!showPassword);
     const toggleConfirmPasswordVisibility = () => setShowConfirmPassword(!showConfirmPassword);
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setUserImage(e.target.files[0]);
+        }
+    };
 
     return (
         <>
@@ -100,7 +160,7 @@ const DialogButtonForSignUpToSupabase: React.FC<DialogButtonForSignUpToSupabaseP
                 <DialogTrigger asChild>
                     <CommonOutlinedButton
                         label="회원가입"
-                        icon={<UserPlus className="w-4 h-4" />} // 아이콘 적용
+                        icon={<UserPlus className="w-4 h-4" />}
                         size="default"
                         color="primary"
                     />
@@ -121,7 +181,6 @@ const DialogButtonForSignUpToSupabase: React.FC<DialogButtonForSignUpToSupabaseP
                                 required
                                 className="w-full px-3 py-2 border rounded-md"
                             />
-                            {/* 이메일 오류 메시지 */}
                             {fieldErrors.find((error) => error.path[0] === "email") && (
                                 <p className="text-red-500 text-sm">
                                     {fieldErrors.find((error) => error.path[0] === "email")?.message}
@@ -147,7 +206,6 @@ const DialogButtonForSignUpToSupabase: React.FC<DialogButtonForSignUpToSupabaseP
                                     {showPassword ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
                                 </button>
                             </div>
-                            {/* 비밀번호 오류 메시지 */}
                             {fieldErrors.find((error) => error.path[0] === "password") && (
                                 <p className="text-red-500 text-sm">
                                     {fieldErrors.find((error) => error.path[0] === "password")?.message}
@@ -173,13 +231,46 @@ const DialogButtonForSignUpToSupabase: React.FC<DialogButtonForSignUpToSupabaseP
                                     {showConfirmPassword ? <EyeOff className="h-4 w-4 text-gray-500" /> : <Eye className="h-4 w-4 text-gray-500" />}
                                 </button>
                             </div>
-                            {/* 비밀번호 확인 오류 메시지 */}
                             {fieldErrors.find((error) => error.path[0] === "confirmPassword") && (
                                 <p className="text-red-500 text-sm">
                                     {fieldErrors.find((error) => error.path[0] === "confirmPassword")?.message}
                                 </p>
                             )}
                         </div>
+
+                        {/* 프로필 정보 */}
+                        <div className="space-y-2">
+                            <Label htmlFor="phoneNumber" className="text-sm font-medium">전화번호</Label>
+                            <Input
+                                id="phoneNumber"
+                                type="text"
+                                placeholder="010-1234-5678"
+                                value={phoneNumber}
+                                onChange={(e) => setPhoneNumber(e.target.value)}
+                                className="w-full px-3 py-2 border rounded-md"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="githubUrl" className="text-sm font-medium">GitHub URL</Label>
+                            <Input
+                                id="githubUrl"
+                                type="text"
+                                placeholder="https://github.com/your-profile"
+                                value={githubUrl}
+                                onChange={(e) => setGithubUrl(e.target.value)}
+                                className="w-full px-3 py-2 border rounded-md"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="userImage" className="text-sm font-medium">프로필 이미지</Label>
+                            <Input
+                                id="userImage"
+                                type="file"
+                                onChange={handleImageChange}
+                                className="w-full px-3 py-2 border rounded-md"
+                            />
+                        </div>
+
                         {errorMessage && (
                             <Alert variant="destructive">
                                 <AlertDescription>{errorMessage}</AlertDescription>
