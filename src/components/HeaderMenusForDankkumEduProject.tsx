@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { HEADER_MENU_ITEMS, MenuItemType } from '@/constants/menu';
 import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarItem, MenubarSub, MenubarSubTrigger, MenubarSubContent, } from "@/components/ui/menubar";
 import dynamic from 'next/dynamic';
-const DialogButtonForAuthMenus = dynamic(() => import('../DialogButtonForAuthMenus'), { ssr: false });
+const DialogButtonForAuthMenus = dynamic(() => import('../app/DialogButtonForAuthMenus'), { ssr: false });
 
 const HeaderMenusForDankkumEduProject = () => {
     const renderMenuItems = (items: MenuItemType[]) => {
