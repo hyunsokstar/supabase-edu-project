@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback, FormEvent } from 'react';
 import { SupabaseClient, User } from '@supabase/supabase-js';
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
     Dialog,
@@ -11,6 +10,8 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import CommonOutlinedButton from '@/components/Common/CommonOutlinedButton';
+import { LogIn } from 'lucide-react';  // 로그인 아이콘 import
 
 // Props 타입 정의
 interface DialogButtonForLoginToSupabaseProps {
@@ -52,7 +53,7 @@ const DialogButtonForLoginToSupabase: React.FC<DialogButtonForLoginToSupabasePro
     return (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-                <Button variant="ghost">로그인</Button>
+                <CommonOutlinedButton label="로그인" icon={<LogIn className="w-4 h-4" />} iconPosition="left" variant="outline" />
             </DialogTrigger>
             <DialogContent className="max-w-sm">
                 <DialogHeader>
@@ -74,9 +75,14 @@ const DialogButtonForLoginToSupabase: React.FC<DialogButtonForLoginToSupabasePro
                         required
                     />
                     {errorMessage && <p className="text-red-500 text-sm">{errorMessage}</p>}
-                    <Button type="submit" disabled={loading}>
-                        {loading ? '로그인 중...' : '로그인'}
-                    </Button>
+                    <CommonOutlinedButton
+                        type="submit"
+                        disabled={loading}
+                        label={loading ? '로그인 중...' : '로그인'}
+                        variant="default"
+                        icon={<LogIn className="w-4 h-4" />}  // 로그인 아이콘 추가
+                        iconPosition="left"
+                    />
                 </form>
             </DialogContent>
         </Dialog>

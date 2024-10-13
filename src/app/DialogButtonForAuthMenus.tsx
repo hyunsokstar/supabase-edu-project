@@ -83,11 +83,14 @@ const DialogButtonForAuthMenus: React.FC = () => {
                 </DropdownMenu>
             ) : (
                 <>
-                    {/* 로그인 버튼 */}
-                    <DialogButtonForLoginToSupabase supabase={supabase} onLoginSuccess={handleLoginSuccess} />
-                    {/* 회원가입 버튼 */}
-                    <DialogButtonForSignUpToSupabase supabase={supabase} />
+                    <div className="flex space-x-2">  {/* flex와 space-x-*로 버튼 사이에 간격 추가 */}
+                        {/* 로그인 버튼 */}
+                        <DialogButtonForLoginToSupabase supabase={supabase} onLoginSuccess={handleLoginSuccess} />
+                        {/* 회원가입 버튼 */}
+                        <DialogButtonForSignUpToSupabase supabase={supabase} />
+                    </div>
                 </>
+
             )}
         </div>
     );

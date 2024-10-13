@@ -1,14 +1,7 @@
 // C:\new-dankkumi\edu-project\src\app\layout.tsx
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
 import "./globals.css";
-import { ToastContainer } from 'react-toastify';  // ToastContainer 임포트
-import 'react-toastify/dist/ReactToastify.css';  // Toastify 스타일 임포트
-
-// 클라이언트에서만 렌더링하는 HeaderMenusForDankkumEduProject
-const DynamicHeaderMenus = dynamic(() => import("../components/HeaderMenusForDankkumEduProject"), {
-  ssr: false, // 서버 사이드 렌더링 비활성화
-});
+import ClientWrapper from "@/components/wrapper/ClientWrapper";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -17,16 +10,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body>
-        <ToastContainer /> {/* ToastContainer를 최상단에 추가 */}
-        <DynamicHeaderMenus /> {/* 클라이언트에서만 렌더링 */}
-        {children}
+        <ClientWrapper>
+          {children}
+        </ClientWrapper>
       </body>
     </html>
   );
 }
+

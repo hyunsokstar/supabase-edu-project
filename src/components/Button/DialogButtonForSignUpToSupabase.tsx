@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
     Dialog,
@@ -15,9 +14,10 @@ import {
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SupabaseClient } from '@supabase/supabase-js';
-import { UserPlus, Loader2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff, UserPlus } from 'lucide-react';
 import * as z from 'zod';  // Zod 라이브러리 추가
 import { toast } from 'react-toastify';  // react-toastify 임포트
+import CommonOutlinedButton from '../Common/CommonOutlinedButton';
 
 interface DialogButtonForSignUpToSupabaseProps {
     supabase: SupabaseClient;
@@ -99,10 +99,12 @@ const DialogButtonForSignUpToSupabase: React.FC<DialogButtonForSignUpToSupabaseP
         <>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                    <Button variant="outline" className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-none hover:from-purple-600 hover:to-pink-600">
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Sign Up
-                    </Button>
+                    <CommonOutlinedButton
+                        label="회원가입"
+                        icon={<UserPlus className="w-4 h-4" />} // 아이콘 적용
+                        size="default"
+                        color="primary"
+                    />
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
@@ -110,7 +112,7 @@ const DialogButtonForSignUpToSupabase: React.FC<DialogButtonForSignUpToSupabaseP
                     </DialogHeader>
                     <form onSubmit={handleSignUp} className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                            <Label htmlFor="email" className="text-sm font-medium">이메일</Label>
                             <Input
                                 id="email"
                                 type="email"
@@ -128,7 +130,7 @@ const DialogButtonForSignUpToSupabase: React.FC<DialogButtonForSignUpToSupabaseP
                             )}
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                            <Label htmlFor="password" className="text-sm font-medium">비밀번호</Label>
                             <div className="relative">
                                 <Input
                                     id="password"
@@ -154,7 +156,7 @@ const DialogButtonForSignUpToSupabase: React.FC<DialogButtonForSignUpToSupabaseP
                             )}
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</Label>
+                            <Label htmlFor="confirmPassword" className="text-sm font-medium">비밀번호 확인</Label>
                             <div className="relative">
                                 <Input
                                     id="confirmPassword"
@@ -185,16 +187,14 @@ const DialogButtonForSignUpToSupabase: React.FC<DialogButtonForSignUpToSupabaseP
                             </Alert>
                         )}
                         <DialogFooter>
-                            <Button
-                                type="submit"
+                            <CommonOutlinedButton
+                                label="회원가입"
+                                icon={<UserPlus className="w-4 h-4" />}
+                                size="lg"
+                                color="primary"
+                                className="w-full"
                                 disabled={loading}
-                                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2 rounded-md hover:from-purple-600 hover:to-pink-600 transition duration-300"
-                            >
-                                {loading && (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                )}
-                                Sign Up
-                            </Button>
+                            />
                         </DialogFooter>
                     </form>
                 </DialogContent>
