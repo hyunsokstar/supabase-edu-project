@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
-import supabase from '@/lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
 import { User } from '@supabase/supabase-js';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 
 const DialogButtonForAuthMenus: React.FC = () => {
+    const [supabase, setSupabase] = useState<any>(null);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -32,43 +33,70 @@ const DialogButtonForAuthMenus: React.FC = () => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     useEffect(() => {
-        const getUserInfo = async () => {
-            const { data } = await supabase.auth.getUser();
-            if (data.user) {
-                setUser(data.user);
-            }
-        };
-        getUserInfo();
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        if (supabaseUrl && supabaseKey) {
+            const supabaseClient = createClient(supabaseUrl, supabaseKey);
+            setSupabase(supabaseClient);
+
+            const { data: authListener } = supabaseClient.auth.onAuthStateChange((event, session) => {
+                setUser(session?.user ?? null);
+            });
+
+            return () => {
+                authListener.subscription.unsubscribe();
+            };
+        }
     }, []);
 
-    const handleLogin = async (e: React.FormEvent) => {
+    useEffect(() => {
+        if (supabase) {
+            const getUserInfo = async () => {
+                const { data } = await supabase.auth.getUser();
+                if (data.user) {
+                    setUser(data.user);
+                }
+            };
+            getUserInfo();
+        }
+    }, [supabase]);
+
+    const handleLogin = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!supabase) return;
+
         setLoading(true);
         setErrorMessage('');
 
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
 
-        if (error) {
-            setErrorMessage(error.message);
-        } else {
+            if (error) throw error;
+
             setUser(data.user);
             setIsDialogOpen(false);
+        } catch (error: any) {
+            setErrorMessage(error.message);
+        } finally {
+            setLoading(false);
         }
+    }, [email, password, supabase]);
 
-        setLoading(false);
-    };
+    const handleLogout = useCallback(async () => {
+        if (!supabase) return;
 
-    const handleLogout = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (!error) {
+        try {
+            await supabase.auth.signOut();
             setUser(null);
-        } else {
+        } catch (error: any) {
             console.error("로그아웃 실패:", error.message);
         }
-    };
+    }, [supabase]);
+
+    if (!supabase) return null;
 
     return (
         <div>

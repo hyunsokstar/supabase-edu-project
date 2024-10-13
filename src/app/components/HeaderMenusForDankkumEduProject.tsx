@@ -1,23 +1,12 @@
-
 'use client';
-
 import * as React from 'react';
 import Link from 'next/link';
 import { HEADER_MENU_ITEMS, MenuItemType } from '@/constants/menu';
-import {
-    Menubar,
-    MenubarMenu,
-    MenubarTrigger,
-    MenubarContent,
-    MenubarItem,
-    MenubarSub,
-    MenubarSubTrigger,
-    MenubarSubContent,
-} from "@/components/ui/menubar";
-import DialogButtonForAuthMenus from '../DialogButtonForAuthMenus';
+import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarItem, MenubarSub, MenubarSubTrigger, MenubarSubContent, } from "@/components/ui/menubar";
+import dynamic from 'next/dynamic';
+const DialogButtonForAuthMenus = dynamic(() => import('../DialogButtonForAuthMenus'), { ssr: false });
 
 const HeaderMenusForDankkumEduProject = () => {
-
     const renderMenuItems = (items: MenuItemType[]) => {
         return items.map((item) => (
             <React.Fragment key={item.key}>
@@ -26,13 +15,13 @@ const HeaderMenusForDankkumEduProject = () => {
                         <MenubarSubTrigger className="flex items-center justify-between w-full text-sm font-medium text-gray-800 hover:bg-gray-100 transition-colors">
                             {item.name}
                         </MenubarSubTrigger>
-                        <MenubarSubContent className="bg-white border border-gray-200 rounded-md shadow-lg p-2">
+                        <MenubarSubContent className="bg-white border border-gray-200 rounded-md shadow-lg">
                             {renderMenuItems(item.items)}
                         </MenubarSubContent>
                     </MenubarSub>
                 ) : (
                     <MenubarItem asChild>
-                        <Link href={`/ ${item.key} `} className="w-full block py-2 px-4 text-sm text-gray-800 hover:bg-gray-100 transition-colors">
+                        <Link href={`/${item.key}`} className="w-full block py-2 px-4 text-sm text-gray-800 hover:bg-gray-100 transition-colors">
                             {item.name}
                         </Link>
                     </MenubarItem>
@@ -42,11 +31,11 @@ const HeaderMenusForDankkumEduProject = () => {
     };
 
     return (
-        <header className="bg-background">
-            <div className="container mx-auto">
-                <Menubar className="flex justify-between h-14 mt-2">
-
-                    <div>
+        <header className="bg-background w-full">
+            <div className="w-full">
+                <Menubar className="flex justify-between h-14 items-center space-x-4 mt-2 w-full">
+                    {/* Left-aligned menus */}
+                    <div className="flex items-center space-x-6 flex-grow">
                         {HEADER_MENU_ITEMS.map((topLevelItem) => (
                             <MenubarMenu key={topLevelItem.key}>
                                 <MenubarTrigger className="flex items-center space-x-1 text-sm font-medium transition-colors hover:text-primary py-2 px-4">
@@ -58,7 +47,8 @@ const HeaderMenusForDankkumEduProject = () => {
                             </MenubarMenu>
                         ))}
                     </div>
-                    <div className="ml-auto">
+                    {/* Right-aligned authentication button */}
+                    <div>
                         <DialogButtonForAuthMenus />
                     </div>
                 </Menubar>

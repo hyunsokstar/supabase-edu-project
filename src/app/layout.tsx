@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import DialogButtonForAuthMenus from "./DialogButtonForAuthMenus";
 import HeaderMenusForDankkumEduProject from "./components/HeaderMenusForDankkumEduProject";
 
 // 동적 import로 SSR 비활성화
-
 
 export const metadata: Metadata = {
   title: "Create Next App",
