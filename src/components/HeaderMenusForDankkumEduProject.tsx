@@ -2,32 +2,47 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { HEADER_MENU_ITEMS, MenuItemType } from '@/constants/menu';
-import { Menubar, MenubarMenu, MenubarTrigger, MenubarContent, MenubarItem, MenubarSub, MenubarSubTrigger, MenubarSubContent, } from "@/components/ui/menubar";
+import {
+    Menubar,
+    MenubarMenu,
+    MenubarTrigger,
+    MenubarContent,
+    MenubarItem,
+    MenubarSub,
+    MenubarSubTrigger,
+    MenubarSubContent
+} from "@/components/ui/menubar";
 import dynamic from 'next/dynamic';
+
 const DialogButtonForAuthMenus = dynamic(() => import('../app/DialogButtonForAuthMenus'), { ssr: false });
 
 const HeaderMenusForDankkumEduProject = () => {
-    const renderMenuItems = (items: MenuItemType[]) => {
-        return items.map((item) => (
-            <React.Fragment key={item.key}>
-                {item.items && item.items.length > 0 ? (
-                    <MenubarSub>
-                        <MenubarSubTrigger className="flex items-center justify-between w-full text-sm font-medium text-gray-800 hover:bg-gray-100 transition-colors">
-                            {item.name}
-                        </MenubarSubTrigger>
-                        <MenubarSubContent className="bg-white border border-gray-200 rounded-md shadow-lg">
-                            {renderMenuItems(item.items)}
-                        </MenubarSubContent>
-                    </MenubarSub>
-                ) : (
-                    <MenubarItem asChild>
-                        <Link href={`/${item.key}`} className="w-full block py-2 px-4 text-sm text-gray-800 hover:bg-gray-100 transition-colors">
-                            {item.name}
-                        </Link>
-                    </MenubarItem>
-                )}
-            </React.Fragment>
-        ));
+
+    const renderMenuItems = (items: MenuItemType[], parentKey = '') => {
+        return items.map((item) => {
+            const itemKey = parentKey ? `${parentKey}/${item.key}` : item.key;
+
+            return (
+                <React.Fragment key={itemKey}>
+                    {item.items && item.items.length > 0 ? (
+                        <MenubarSub>
+                            <MenubarSubTrigger className="flex items-center justify-between w-full text-sm font-medium text-gray-800 hover:bg-gray-100 transition-colors">
+                                {item.name}
+                            </MenubarSubTrigger>
+                            <MenubarSubContent className="bg-white border border-gray-200 rounded-md shadow-lg">
+                                {renderMenuItems(item.items, itemKey)}
+                            </MenubarSubContent>
+                        </MenubarSub>
+                    ) : (
+                        <MenubarItem asChild>
+                            <Link href={`/${itemKey}`} className="w-full block py-2 px-4 text-sm text-gray-800 hover:bg-gray-100 transition-colors">
+                                {item.name}
+                            </Link>
+                        </MenubarItem>
+                    )}
+                </React.Fragment>
+            );
+        });
     };
 
     return (
@@ -42,7 +57,7 @@ const HeaderMenusForDankkumEduProject = () => {
                                     {topLevelItem.name}
                                 </MenubarTrigger>
                                 <MenubarContent className="bg-white border border-gray-200 rounded-md shadow-lg p-2 mt-2">
-                                    {renderMenuItems(topLevelItem.items || [])}
+                                    {renderMenuItems(topLevelItem.items || [], topLevelItem.key)}
                                 </MenubarContent>
                             </MenubarMenu>
                         ))}

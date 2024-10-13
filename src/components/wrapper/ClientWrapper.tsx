@@ -12,6 +12,9 @@ export default function ClientWrapper({ children }: { children: React.ReactNode 
         <>
             <DynamicToastProvider />
             <DynamicHeaderMenus />
+            <div>
+                hi
+            </div>
             {children}
         </>
     );
