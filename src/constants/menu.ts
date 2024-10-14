@@ -87,6 +87,45 @@ export const HEADER_MENU_ITEMS: MenuItemType[] = [
                 ]
             }
         ]
+    },
+    // 인사 관리
+    {
+        key: "hr-management",
+        name: "인사 관리",
+        items: [
+            {
+                key: "employee-management",
+                name: "직원 관리",
+                items: [
+                    { key: "employee-list", name: "직원 목록" },
+                    { key: "employee-profile", name: "직원 프로필" }
+                ]
+            },
+            {
+                key: "attendance-management",
+                name: "근태 관리",
+                items: [
+                    { key: "attendance-overview", name: "근태 개요" },
+                    { key: "attendance-report", name: "근태 보고서" }
+                ]
+            },
+            {
+                key: "leave-management",
+                name: "휴가 관리",
+                items: [
+                    { key: "leave-overview", name: "휴가 개요" },
+                    { key: "leave-request", name: "휴가 신청" }
+                ]
+            },
+            {
+                key: "payroll-management",
+                name: "급여 관리",
+                items: [
+                    { key: "payroll-overview", name: "급여 개요" },
+                    { key: "payroll-report", name: "급여 보고서" }
+                ]
+            }
+        ]
     }
 ];
 
