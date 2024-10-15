@@ -45,9 +45,11 @@ const DialogButtonForUpdateUserInfoForUserId: React.FC<DialogButtonForUpdateUser
 
     const handleSubmit = async () => {
         // 사용자 정보 업데이트 요청
-        await updateUserInfo(userId, phoneNumber, githubUrl, userImage, todayCompletedTasksCount, currentTask);
-        onClose(); // 다이얼로그 닫기
-        toast.success('사용자 정보가 업데이트되었습니다.');
+        const userImageUrl = await updateUserInfo(userId, phoneNumber, githubUrl, userImage, todayCompletedTasksCount, currentTask);
+        if (userImageUrl) {
+            console.log('업로드된 이미지 URL:', userImageUrl);
+        }
+        // toast.success('사용자 정보가 업데이트되었습니다.');
     };
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {

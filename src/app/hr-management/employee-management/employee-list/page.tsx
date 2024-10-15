@@ -42,6 +42,7 @@ const EmployListPage: React.FC = () => {
                                         alt="User Image"
                                         className="w-16 h-16 object-cover rounded-full"
                                     />
+                                    {/* {employee.user_image ? (employee.user_image) : '이미지 없음'} */}
                                 </td>
                                 <td className="border p-2">{employee.phone_number}</td>
                                 <td className="border p-2">

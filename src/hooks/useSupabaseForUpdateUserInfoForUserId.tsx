@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import getSupabase from '@/lib/supabaseClient';
 import { toast } from 'react-toastify';
+import { uploadImageToS3 } from '@/lib/uploadImageToS3'; // 분리된 함수 임포트
 
 // Presigned URL 가져오기
 const fetchPresignedUrl = async (fileName: string, folder: string): Promise<{ signedUrl: string, fileUrl: string }> => {
@@ -10,18 +11,6 @@ const fetchPresignedUrl = async (fileName: string, folder: string): Promise<{ si
     }
     const data = await res.json();
     return { signedUrl: data.url, fileUrl: data.fileUrl };
-};
-
-// S3로 이미지 업로드
-const uploadImageToS3 = async (file: File, signedUrl: string) => {
-    const res = await fetch(signedUrl, {
-        method: 'PUT',
-        body: file,
-    });
-
-    if (!res.ok) {
-        throw new Error('이미지 업로드 실패');
-    }
 };
 
 export const useSupabaseForUpdateUserInfoForUserId = () => {
@@ -43,7 +32,7 @@ export const useSupabaseForUpdateUserInfoForUserId = () => {
         if (!supabase) {
             setError('Supabase 초기화 실패');
             setLoading(false);
-            return;
+            return null;
         }
 
         try {
@@ -55,8 +44,13 @@ export const useSupabaseForUpdateUserInfoForUserId = () => {
 
                 // Presigned URL 요청
                 const { signedUrl, fileUrl } = await fetchPresignedUrl(fileName, 'profiles');
-                await uploadImageToS3(userImage, signedUrl); // 이미지 업로드
-                userImageUrl = fileUrl; // 업로드된 이미지의 URL 저장
+
+                // 업로드된 결과 URL 저장
+                userImageUrl = fileUrl;
+
+                // 분리된 uploadImageToS3 함수로 파일 업로드
+                await uploadImageToS3(userImage, signedUrl);
+
             }
 
             // public.profile에 데이터 upsert
@@ -83,6 +77,9 @@ export const useSupabaseForUpdateUserInfoForUserId = () => {
                 draggable: true,
                 progress: undefined,
             });
+
+            // 이미지 URL 반환
+            return userImageUrl;
         } catch (err: any) {
             console.error('Update error:', err);
             setError(err.message || '알 수 없는 오류가 발생했습니다.');
@@ -95,6 +92,7 @@ export const useSupabaseForUpdateUserInfoForUserId = () => {
                 draggable: true,
                 progress: undefined,
             });
+            return null;
         } finally {
             setLoading(false);
         }
