@@ -12,6 +12,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Loader2 } from 'lucide-react';
 import { useSupabaseForUpdateUserInfoForUserId } from '@/hooks/useSupabaseForUpdateUserInfoForUserId';
+import { useImageUpload } from '@/hooks/useImageUploadToS3';
 
 interface DialogButtonForUpdateUserInfoForUserIdProps {
     userId: string;
@@ -39,63 +40,34 @@ const DialogButtonForUpdateUserInfoForUserId: React.FC<DialogButtonForUpdateUser
     const [userImage, setUserImage] = useState<File | null>(null);
     const [todayCompletedTasksCount, setTodayCompletedTasksCount] = useState(initialTodayCompletedTasksCount);
     const [currentTask, setCurrentTask] = useState(initialCurrentTask);
-    const [presignedUrl, setPresignedUrl] = useState<string | null>(null);
-    const [fileUrl, setFileUrl] = useState<string | null>(null);
 
-    const { updateUserInfo, loading, error } = useSupabaseForUpdateUserInfoForUserId();
+    const { updateUserInfo, loading: updating, error: updateError } = useSupabaseForUpdateUserInfoForUserId();
+    const { uploadImage, loading: uploading, error: uploadError } = useImageUpload();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         try {
             let updatedImageUrl = null;
-            if (userImage && presignedUrl) {
-                // Upload the file using presigned URL
-                const uploadResponse = await fetch(presignedUrl, {
-                    method: 'PUT',
-                    body: userImage,
-                    headers: {
-                        'Content-Type': userImage.type,
-                    },
-                });
-
-                if (!uploadResponse.ok) {
-                    throw new Error('Failed to upload image to S3');
+            if (userImage) {
+                // 이미지 업로드 처리
+                const imageUrl = await uploadImage(userImage, 'profiles');
+                if (imageUrl) {
+                    updatedImageUrl = imageUrl;
                 }
-
-                updatedImageUrl = fileUrl;
             }
 
+            // 사용자 정보 업데이트 처리
             await updateUserInfo(userId, phoneNumber, githubUrl, updatedImageUrl, todayCompletedTasksCount, currentTask);
             onClose();
         } catch (err) {
             console.error('Update failed:', err);
-            // 에러 처리 (예: 사용자에게 알림)
         }
     };
 
-    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
             setUserImage(file);
-
-            try {
-                const response = await fetch(`/api/get-upload-url?file=${encodeURIComponent(file.name)}&folder=profiles`, {
-                    method: 'GET',
-                });
-
-                if (!response.ok) {
-                    throw new Error('Failed to get presigned URL');
-                }
-
-                const { url, fileUrl } = await response.json();
-                setPresignedUrl(url);
-                setFileUrl(fileUrl);
-                console.log('Received presigned URL:', url);
-                console.log('File URL:', fileUrl);
-            } catch (error) {
-                console.error('Error getting presigned URL:', error);
-                // 에러 처리 (예: 사용자에게 알림)
-            }
         }
     };
 
@@ -144,12 +116,6 @@ const DialogButtonForUpdateUserInfoForUserId: React.FC<DialogButtonForUpdateUser
                             onChange={handleImageChange}
                             className="w-full px-3 py-2 border rounded-md"
                         />
-                        {presignedUrl && (
-                            <div className="mt-2">
-                                <p className="text-sm text-gray-500">Presigned URL: {presignedUrl}</p>
-                                <p className="text-sm text-gray-500">File URL: {fileUrl}</p>
-                            </div>
-                        )}
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="todayCompletedTasksCount">오늘 완료한 작업 수</Label>
@@ -171,14 +137,14 @@ const DialogButtonForUpdateUserInfoForUserId: React.FC<DialogButtonForUpdateUser
                             className="w-full px-3 py-2 border rounded-md"
                         />
                     </div>
-                    {error && <p className="text-red-500">Error: {error}</p>}
+                    {(uploadError || updateError) && <p className="text-red-500">Error: {uploadError || updateError}</p>}
                     <DialogFooter>
                         <button
                             type="submit"
                             className="px-4 py-2 bg-blue-500 text-white rounded-md"
-                            disabled={loading}
+                            disabled={updating || uploading}
                         >
-                            {loading ? <Loader2 className="animate-spin" /> : '수정'}
+                            {(updating || uploading) ? <Loader2 className="animate-spin" /> : '수정'}
                         </button>
                     </DialogFooter>
                 </form>
