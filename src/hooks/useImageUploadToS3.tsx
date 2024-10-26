@@ -44,7 +44,6 @@ export const useImageUpload = (): UseImageUploadResult => {
 
             // allUsers
             // tanstack/react-query
-            queryClient.refetchQueries({ queryKey: ['allUsers'] });
 
             // 파일이 성공적으로 업로드되면 fileUrl 반환
             return fileUrl;

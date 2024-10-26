@@ -11,10 +11,10 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from 'lucide-react';
-import { useSupabaseForUpdateUserInfoForUserId } from '@/hooks/useSupabaseForUpdateUserInfoForUserId';
 import { useImageUpload } from '@/hooks/useImageUploadToS3';
+import useSupabaseForUpdateUserInfo from '@/hooks/useSupabaseForUpdateUserInfoForUserId';
 
-interface DialogButtonForUpdateUserInfoForUserIdProps {
+interface DialogButtonForUpdateUserInfoProps {
     userId: string;
     initialEmail: string;
     initialPhoneNumber: string;
@@ -25,7 +25,7 @@ interface DialogButtonForUpdateUserInfoForUserIdProps {
     onClose: () => void;
 }
 
-const DialogButtonForUpdateUserInfoForUserId: React.FC<DialogButtonForUpdateUserInfoForUserIdProps> = ({
+const DialogButtonForUpdateUserInfo: React.FC<DialogButtonForUpdateUserInfoProps> = ({
     userId,
     initialEmail,
     initialPhoneNumber,
@@ -41,7 +41,7 @@ const DialogButtonForUpdateUserInfoForUserId: React.FC<DialogButtonForUpdateUser
     const [todayCompletedTasksCount, setTodayCompletedTasksCount] = useState(initialTodayCompletedTasksCount);
     const [currentTask, setCurrentTask] = useState(initialCurrentTask);
 
-    const { updateUserInfo, loading: updating, error: updateError } = useSupabaseForUpdateUserInfoForUserId();
+    const updateUserMutation = useSupabaseForUpdateUserInfo();
     const { uploadImage, loading: uploading, error: uploadError } = useImageUpload();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -49,16 +49,24 @@ const DialogButtonForUpdateUserInfoForUserId: React.FC<DialogButtonForUpdateUser
         try {
             let updatedImageUrl = null;
             if (userImage) {
-                // 이미지 업로드 처리
                 const imageUrl = await uploadImage(userImage, 'profiles');
                 if (imageUrl) {
                     updatedImageUrl = imageUrl;
                 }
             }
 
-            // 사용자 정보 업데이트 처리
-            await updateUserInfo(userId, phoneNumber, githubUrl, updatedImageUrl, todayCompletedTasksCount, currentTask);
-            onClose();
+            updateUserMutation.mutate({
+                userId,
+                phoneNumber,
+                githubUrl,
+                userImageUrl: updatedImageUrl,
+                todayCompletedTasksCount,
+                currentTask
+            }, {
+                onSuccess: () => {
+                    onClose();
+                }
+            });
         } catch (err) {
             console.error('Update failed:', err);
         }
@@ -70,6 +78,9 @@ const DialogButtonForUpdateUserInfoForUserId: React.FC<DialogButtonForUpdateUser
             setUserImage(file);
         }
     };
+
+    const isLoading = updateUserMutation.isPending || uploading;
+    const error = updateUserMutation.error || uploadError;
 
     return (
         <Dialog open={true} onOpenChange={onClose}>
@@ -137,14 +148,14 @@ const DialogButtonForUpdateUserInfoForUserId: React.FC<DialogButtonForUpdateUser
                             className="w-full px-3 py-2 border rounded-md"
                         />
                     </div>
-                    {(uploadError || updateError) && <p className="text-red-500">Error: {uploadError || updateError}</p>}
+                    {error && <p className="text-red-500">Error: {error instanceof Error ? error.message : '업데이트 중 오류가 발생했습니다'}</p>}
                     <DialogFooter>
                         <button
                             type="submit"
                             className="px-4 py-2 bg-blue-500 text-white rounded-md"
-                            disabled={updating || uploading}
+                            disabled={isLoading}
                         >
-                            {(updating || uploading) ? <Loader2 className="animate-spin" /> : '수정'}
+                            {isLoading ? <Loader2 className="animate-spin" /> : '수정'}
                         </button>
                     </DialogFooter>
                 </form>
@@ -153,4 +164,4 @@ const DialogButtonForUpdateUserInfoForUserId: React.FC<DialogButtonForUpdateUser
     );
 };
 
-export default DialogButtonForUpdateUserInfoForUserId;
+export default DialogButtonForUpdateUserInfo;
