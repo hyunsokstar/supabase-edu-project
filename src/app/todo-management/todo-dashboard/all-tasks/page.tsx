@@ -3,11 +3,19 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Loader } from 'lucide-react';
+import { Loader, Edit, Trash } from 'lucide-react';
 import useApiForGetTodoList from '@/hooks/useApiForTodoList';
+import useApiForDeleteTodo from '@/hooks/useApiForDeleteTodo';
 
 const TodoListPage = () => {
     const { data: todoList, isLoading, error } = useApiForGetTodoList();
+    const deleteTodoMutation = useApiForDeleteTodo();
+
+    const handleDeleteTodo = async (todoId: number) => {
+        if (window.confirm('정말로 이 Todo를 삭제하시겠습니까?')) {
+            deleteTodoMutation.mutate(todoId);
+        }
+    };
 
     if (isLoading) {
         return <Loader className="h-8 w-8 mx-auto my-4" />;
@@ -24,13 +32,7 @@ const TodoListPage = () => {
                 {todoList && todoList.length > 0 ? (
                     <table className="min-w-full bg-white border border-gray-300 rounded-md shadow-md">
                         <thead className="bg-gray-100">
-                            <tr>
-                                <th className="p-3 text-left text-gray-600 font-semibold">User</th>
-                                <th className="p-3 text-left text-gray-600 font-semibold">Title</th>
-                                <th className="p-3 text-left text-gray-600 font-semibold">Description</th>
-                                <th className="p-3 text-left text-gray-600 font-semibold">Completed</th>
-                                <th className="p-3 text-center text-gray-600 font-semibold">Actions</th>
-                            </tr>
+                            {/* 이전과 동일 */}
                         </thead>
                         <tbody>
                             {todoList.map((todo) => (
@@ -46,12 +48,18 @@ const TodoListPage = () => {
                                     <td className="p-3">{todo.title}</td>
                                     <td className="p-3">{todo.description || 'No description'}</td>
                                     <td className="p-3">{todo.is_completed ? 'Yes' : 'No'}</td>
-                                    <td className="p-3 text-center">
-                                        <Button variant="outline" size="sm" className="mr-2">
-                                            Edit
+                                    <td className="p-3 text-center flex justify-center space-x-2">
+                                        <Button variant="ghost" size="icon" className="text-blue-500 hover:text-blue-700">
+                                            <Edit className="w-5 h-5" />
                                         </Button>
-                                        <Button variant="destructive" size="sm">
-                                            Delete
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="text-red-500 hover:text-red-700"
+                                            onClick={() => handleDeleteTodo(todo.id)}
+                                            disabled={deleteTodoMutation.isPending}
+                                        >
+                                            <Trash className="w-5 h-5" />
                                         </Button>
                                     </td>
                                 </tr>
