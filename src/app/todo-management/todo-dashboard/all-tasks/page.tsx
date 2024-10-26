@@ -25,6 +25,7 @@ const TodoListPage = () => {
                     <table className="min-w-full bg-white border border-gray-300 rounded-md shadow-md">
                         <thead className="bg-gray-100">
                             <tr>
+                                <th className="p-3 text-left text-gray-600 font-semibold">User</th>
                                 <th className="p-3 text-left text-gray-600 font-semibold">Title</th>
                                 <th className="p-3 text-left text-gray-600 font-semibold">Description</th>
                                 <th className="p-3 text-left text-gray-600 font-semibold">Completed</th>
@@ -34,6 +35,14 @@ const TodoListPage = () => {
                         <tbody>
                             {todoList.map((todo) => (
                                 <tr key={todo.id} className="border-b last:border-0 hover:bg-gray-50">
+                                    <td className="p-3 flex items-center">
+                                        <img
+                                            src={todo.users.profile.user_image || 'https://via.placeholder.com/40'}
+                                            alt="User Avatar"
+                                            className="w-10 h-10 rounded-full mr-3"
+                                        />
+                                        <span>{todo.users.email || 'Unknown User'}</span>
+                                    </td>
                                     <td className="p-3">{todo.title}</td>
                                     <td className="p-3">{todo.description || 'No description'}</td>
                                     <td className="p-3">{todo.is_completed ? 'Yes' : 'No'}</td>
