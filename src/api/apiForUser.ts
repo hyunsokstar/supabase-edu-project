@@ -2,8 +2,10 @@
 import getSupabase from '@/lib/supabaseClient';
 import { UpdateUserInfoParams } from '@/type/typeForUser';
 
+
 export const fetchAllUserList = async () => {
     const supabase = getSupabase();
+
     if (!supabase) {
         throw new Error('Supabase Client를 초기화할 수 없습니다.');
     }
