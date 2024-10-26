@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 import { Edit, Trash2 } from 'lucide-react'; // 수정 및 삭제 아이콘
 import DialogButtonForUpdateUserInfoForUserId from '@/components/Button/DialogButtonForUpdateUserInfoForUserId';
 import DialogButtonForDeleteUserInfoForUserId from '@/components/Button/DialogButtonForDeleteUserInfoForUserId';
-import { useSupabaseForGetAllUserList } from '@/hooks/useSupabaseForGetAllUserList'; // React Query 훅 사용
+import { useSupabaseForGetAllUserList } from '@/hooks/useApiForGetAllUserList'; // React Query 훅 사용
 
 const EmployListPage: React.FC = () => {
     const { data: employees, isLoading, error } = useSupabaseForGetAllUserList(); // React Query에서 받아오는 데이터, 로딩, 에러 상태

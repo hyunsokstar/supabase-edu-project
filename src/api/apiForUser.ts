@@ -1,5 +1,6 @@
 // C:\new-dankkumi\edu-project\src\lib\apiForUser.ts
 import getSupabase from '@/lib/supabaseClient';
+import { UpdateUserInfoParams } from '@/type/typeForUser';
 
 export const fetchAllUserList = async () => {
     const supabase = getSupabase();
@@ -60,4 +61,35 @@ export const deleteUser = async (userId: string) => {
     }
 
     return { message: 'User successfully deleted' };
+};
+
+export const apiForUpdateUserInfo = async ({
+    userId,
+    phoneNumber,
+    githubUrl,
+    userImageUrl,
+    todayCompletedTasksCount,
+    currentTask
+}: UpdateUserInfoParams): Promise<string | null> => {
+    const supabase = getSupabase();
+    if (!supabase) {
+        throw new Error('Supabase 초기화 실패');
+    }
+
+    const { error: profileError } = await supabase
+        .from('profile')
+        .upsert({
+            user_id: userId,
+            phone_number: phoneNumber,
+            github_url: githubUrl,
+            user_image: userImageUrl,
+            today_completed_tasks_count: todayCompletedTasksCount,
+            current_task: currentTask,
+        }, { onConflict: 'user_id' });
+
+    if (profileError) {
+        throw profileError;
+    }
+
+    return userImageUrl;
 };

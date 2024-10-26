@@ -8,3 +8,12 @@ export type IUserRow = {
     current_task: string;
     today_completed_tasks_count: number;
 };
+
+export interface UpdateUserInfoParams {
+    userId: string;
+    phoneNumber: string;
+    githubUrl: string;
+    userImageUrl: string | null;
+    todayCompletedTasksCount: number;
+    currentTask: string;
+}
