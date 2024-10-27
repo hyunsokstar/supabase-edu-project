@@ -1,3 +1,4 @@
+// src/components/DialogButtonForCreateTodo.tsx
 "use client";
 
 import { useState } from "react";
@@ -7,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "react-toastify";
 import { useForm, Controller } from "react-hook-form";
+import useApiForCreateTodo from "@/hooks/useApiForCreateTodo";
+import useUserStore from "@/store/userStore"; // Zustand 스토어에서 유저 정보 가져오기
 
 interface TodoForm {
     title: string;
@@ -24,11 +27,32 @@ export default function DialogButtonForCreateTodo() {
         },
     });
 
+    // 로그인된 사용자 정보 가져오기
+    const { id: userId, email } = useUserStore();
+    const { mutate: createTodo } = useApiForCreateTodo();
+
     const onSubmit = (data: TodoForm) => {
-        console.log("입력 내용:", data); // 입력한 내용 로그 확인
-        toast.success("할 일이 추가되었습니다.");
-        setOpen(false);
-        reset(); // 폼 초기화
+        if (!userId) {
+            toast.error("로그인된 사용자 정보가 필요합니다.");
+            return;
+        }
+
+        // API 요청을 위한 데이터를 구성하고 요청 실행
+        createTodo(
+            {
+                title: data.title,
+                description: data.description,
+                is_completed: data.is_completed,
+                userId: userId, // 현재 로그인된 사용자의 ID
+            },
+            {
+                onSuccess: () => {
+                    toast.success("할 일이 추가되었습니다.");
+                    setOpen(false);
+                    reset(); // 폼 초기화
+                },
+            }
+        );
     };
 
     return (
@@ -38,6 +62,13 @@ export default function DialogButtonForCreateTodo() {
             </DialogTrigger>
             <DialogContent>
                 <DialogTitle>새 할 일 추가</DialogTitle>
+
+                {/* 로그인된 사용자 정보 표시 */}
+                {/* <div className="mb-4 text-sm text-gray-700">
+                    <p><strong>사용자 이메일:</strong> {email}</p>
+                    <p><strong>사용자 ID:</strong> {userId}</p>
+                </div> */}
+
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="space-y-4">
                         <div>

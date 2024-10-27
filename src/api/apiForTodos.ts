@@ -1,6 +1,6 @@
 // src/api/apiForTodos.ts
 import getSupabase from '@/lib/supabaseClient';
-import { IRequestParameterForApiForCreateTodo } from '@/type/typeForTodos';
+import { IRequestParameterForApiForCreateTodo, ITodoItem } from '@/type/typeForTodos';
 
 export const apiForCreateTodo = async (todo: IRequestParameterForApiForCreateTodo): Promise<void> => {
     const supabase = getSupabase();
