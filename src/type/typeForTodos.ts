@@ -15,3 +15,11 @@ export interface ITodoItem {
         };
     };
 }
+
+// src/type/typeForTodos.ts
+export interface IRequestParameterForApiForCreateTodo {
+    title: string;
+    description: string;
+    is_completed: boolean;
+    userId: string; // 현재 로그인된 사용자의 ID
+}

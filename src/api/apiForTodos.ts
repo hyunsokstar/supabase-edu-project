@@ -1,7 +1,29 @@
 // src/api/apiForTodos.ts
 import getSupabase from '@/lib/supabaseClient';
-import { ITodoItem } from '@/type/typeForTodos';
+import { IRequestParameterForApiForCreateTodo } from '@/type/typeForTodos';
 
+export const apiForCreateTodo = async (todo: IRequestParameterForApiForCreateTodo): Promise<void> => {
+    const supabase = getSupabase();
+    if (!supabase) {
+        throw new Error('Supabase 초기화 실패');
+    }
+
+    const { error } = await supabase
+        .from('todos')
+        .insert({
+            title: todo.title,
+            description: todo.description,
+            is_completed: todo.is_completed,
+            user_id: todo.userId, // 현재 로그인 유저의 ID를 설정
+        });
+
+    if (error) {
+        throw new Error(`Todo 추가 중 오류가 발생했습니다: ${error.message}`);
+    }
+};
+
+
+// todo 리스트 조회
 export const apiForGetTodoList = async (): Promise<ITodoItem[]> => {
     const supabase = getSupabase();
     if (!supabase) {
@@ -38,8 +60,7 @@ export const apiForGetTodoList = async (): Promise<ITodoItem[]> => {
     return data as unknown as ITodoItem[];
 };
 
-
-// src/api/apiForTodos.ts에 추가
+// todo 삭제 with id
 export const apiForDeleteTodo = async (todoId: number): Promise<void> => {
     const supabase = getSupabase();
     if (!supabase) {
@@ -55,4 +76,3 @@ export const apiForDeleteTodo = async (todoId: number): Promise<void> => {
         throw new Error(`Todo 삭제 중 오류가 발생했습니다: ${error.message}`);
     }
 };
-

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Loader, Edit, Trash } from 'lucide-react';
 import useApiForGetTodoList from '@/hooks/useApiForTodoList';
 import useApiForDeleteTodo from '@/hooks/useApiForDeleteTodo';
+import DialogButtonForCreateTodo from '@/components/Button/DialogButtonForCreateTodo';
 
 const TodoListPage = () => {
     const { data: todoList, isLoading, error } = useApiForGetTodoList();
@@ -27,12 +28,22 @@ const TodoListPage = () => {
 
     return (
         <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold text-center mb-6">Todo List</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold">Todo List</h1>
+                <DialogButtonForCreateTodo />
+            </div>
+
             <div className="overflow-x-auto">
                 {todoList && todoList.length > 0 ? (
                     <table className="min-w-full bg-white border border-gray-300 rounded-md shadow-md">
                         <thead className="bg-gray-100">
-                            {/* 이전과 동일 */}
+                            <tr>
+                                <th className="p-3 text-left">User</th>
+                                <th className="p-3 text-left">Title</th>
+                                <th className="p-3 text-left">Description</th>
+                                <th className="p-3 text-left">Completed</th>
+                                <th className="p-3 text-center">Actions</th>
+                            </tr>
                         </thead>
                         <tbody>
                             {todoList.map((todo) => (
