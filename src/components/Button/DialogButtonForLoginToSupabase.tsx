@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, FormEvent } from 'react';
-import { SupabaseClient, User } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 import { Input } from "@/components/ui/input";
 import {
     Dialog,
@@ -11,15 +11,15 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import CommonOutlinedButton from '@/components/Common/CommonOutlinedButton';
-import { LogIn } from 'lucide-react';  // 로그인 아이콘 import
+import { LogIn } from 'lucide-react';
+import getSupabase from '@/lib/supabaseClient'; // Supabase 클라이언트 가져오기
 
 // Props 타입 정의
 interface DialogButtonForLoginToSupabaseProps {
-    supabase: SupabaseClient; // Supabase 클라이언트
     onLoginSuccess: (user: User | null) => void; // 로그인 성공 시 호출되는 콜백 함수
 }
 
-const DialogButtonForLoginToSupabase: React.FC<DialogButtonForLoginToSupabaseProps> = ({ supabase, onLoginSuccess }) => {
+const DialogButtonForLoginToSupabase: React.FC<DialogButtonForLoginToSupabaseProps> = ({ onLoginSuccess }) => {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
@@ -28,7 +28,12 @@ const DialogButtonForLoginToSupabase: React.FC<DialogButtonForLoginToSupabasePro
 
     const handleLogin = useCallback(async (e: FormEvent) => {
         e.preventDefault();
-        if (!supabase) return;
+        const supabase = getSupabase();
+
+        if (!supabase) {
+            setErrorMessage("Supabase 클라이언트를 초기화하지 못했습니다.");
+            return;
+        }
 
         setLoading(true);
         setErrorMessage('');
@@ -48,7 +53,7 @@ const DialogButtonForLoginToSupabase: React.FC<DialogButtonForLoginToSupabasePro
         } finally {
             setLoading(false);
         }
-    }, [email, password, supabase, onLoginSuccess]);
+    }, [email, password, onLoginSuccess]);
 
     return (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -80,7 +85,7 @@ const DialogButtonForLoginToSupabase: React.FC<DialogButtonForLoginToSupabasePro
                         disabled={loading}
                         label={loading ? '로그인 중...' : '로그인'}
                         variant="default"
-                        icon={<LogIn className="w-4 h-4" />}  // 로그인 아이콘 추가
+                        icon={<LogIn className="w-4 h-4" />}
                         iconPosition="left"
                     />
                 </form>
