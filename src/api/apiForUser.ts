@@ -1,9 +1,9 @@
-// C:\new-dankkumi\edu-project\src\lib\apiForUser.ts
+// src/lib/apiForUser.ts
 import getSupabase from '@/lib/supabaseClient';
-import { UpdateUserInfoParams } from '@/type/typeForUser';
+import { IUserRow, UpdateUserInfoParams } from '@/type/typeForUser';
 
-
-export const fetchAllUserList = async () => {
+// 모든 사용자 목록을 가져오는 API
+export const fetchAllUserList = async (): Promise<IUserRow[]> => {
     const supabase = getSupabase();
 
     if (!supabase) {
@@ -29,7 +29,8 @@ export const fetchAllUserList = async () => {
         throw error;
     }
 
-    return data.map((user: any) => ({
+    // 데이터 매핑 후 IUserRow[] 형태로 반환
+    return (data as any[]).map((user): IUserRow => ({
         id: user.id,
         email: user.email,
         created_at: user.created_at,
@@ -41,8 +42,9 @@ export const fetchAllUserList = async () => {
     }));
 };
 
+
 // 사용자 삭제 API 로직 추가
-export const deleteUser = async (userId: string) => {
+export const deleteUser = async (userId: string): Promise<{ message: string }> => {
     const supabase = getSupabase();
     if (!supabase) {
         throw new Error('Supabase Client를 초기화할 수 없습니다.');
@@ -65,6 +67,7 @@ export const deleteUser = async (userId: string) => {
     return { message: 'User successfully deleted' };
 };
 
+// 사용자 정보를 업데이트하는 API 로직
 export const apiForUpdateUserInfo = async ({
     userId,
     phoneNumber,
