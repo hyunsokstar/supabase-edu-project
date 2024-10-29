@@ -131,7 +131,6 @@ const MenuListPage = () => {
                         <div className="space-y-4">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <h2 className="text-lg font-semibold">{selectedMenu.id}</h2>
                                     <p className="text-sm text-gray-500">
                                         최종 수정: {format(new Date(selectedMenu.updated_at), 'yyyy-MM-dd')}
                                     </p>

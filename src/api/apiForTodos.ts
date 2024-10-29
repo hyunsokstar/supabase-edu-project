@@ -1,6 +1,41 @@
 // src/api/apiForTodos.ts
 import getSupabase from '@/lib/supabaseClient';
-import { IRequestParameterForApiForCreateTodo, ITodoItem } from '@/type/typeForTodos';
+import { IRequestParameterForApiForCreateTodo, IRequestTypeForApiForCreateMultiTodosWithMenuArray } from '@/type/typeForTodos';
+import useUserStore from '@/store/userStore';
+
+// apiForCreateMultiTodosWithMenuArray
+export const apiForCreateMultiTodosWithMenuArray = async (
+    request: Omit<IRequestTypeForApiForCreateMultiTodosWithMenuArray, 'userId'>[]
+  ) => {
+    const supabase = getSupabase();
+    const userStore = useUserStore.getState();
+
+    console.log("request : ", request);
+    
+
+    // 사용자 ID가 없는 경우 예외 처리
+    if (!userStore.id) {
+      throw new Error('로그인된 사용자를 찾을 수 없습니다.');
+    }
+  
+    // 요청에 사용자 ID 추가
+    const requestWithUserId = request.map((req) => ({
+      ...req,
+      user_id: userStore.id,
+    }));
+  
+    // 데이터 삽입
+    const { data, error } = await supabase.from('todos').insert(requestWithUserId);
+    if (error) {
+      throw new Error(`Failed to insert todos: ${error.message}`);
+    }
+    
+    // 삽입된 데이터 로그로 확인
+    console.log('삽입된 데이터:', data);
+
+    return data;
+  };
+
 
 export const apiForCreateTodo = async (todo: IRequestParameterForApiForCreateTodo): Promise<void> => {
     const supabase = getSupabase();
@@ -76,12 +111,15 @@ export const apiForGetTodoList = async (): Promise<ITodoItem[]> => {
             id,
             title,
             description,
-            is_completed,
             created_at,
             updated_at,
             user_id,
             day_of_week,
             order,
+            first_menu,
+            second_menu,
+            status,
+            status_changed_at,
             users (
                 email,
                 profile (
@@ -95,9 +133,7 @@ export const apiForGetTodoList = async (): Promise<ITodoItem[]> => {
         throw new Error(`Todo 리스트를 불러오는 중 오류가 발생했습니다: ${error.message}`);
     }
 
-    // 원본 데이터를 콘솔에 출력
     console.log("Raw data from Supabase:", data);
 
-    // 일단 원본 데이터를 그대로 반환하여 확인
     return data as unknown as ITodoItem[];
 };

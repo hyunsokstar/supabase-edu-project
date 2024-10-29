@@ -3,21 +3,27 @@
 // 메뉴 구조 타입 정의
 // src/type/typeForMenuStructure.ts
 
+// src/type/typeForMenuStructure.ts
+
+// src/type/typeForMenuStructure.ts
+
 export interface IMenuStructure {
     id: number;
-    menu_structure: any;  // JSONB type
-    classification: string | null;
-    description: string | null;
-    created_by: string;
+    description: string; // 메뉴 설명
+    name?: string; // 메뉴 이름 (optional)
+    classification?: string;
     created_at: string;
     updated_at: string;
+    items?: IMenuStructure[]; // 하위 메뉴 구조
     users?: {
-      email: string;
-      profile?: {
+      profile: {
         user_image: string;
       };
     };
-}
+    menu_structure?: any; // JSON이나 객체 형태로 구조를 저장할 경우 (optional)
+  }
+  
+  
 
 
 // 단일 메뉴 구조 조회 응답 타입

@@ -40,7 +40,7 @@ export const apiForGetMenuStructureList = async (): Promise<IMenuStructure[]> =>
   // 디버깅을 위한 데이터 출력
   console.log("Raw data from Supabase:", data);
 
-  return data as IMenuStructure[];
+  return data as unknown as IMenuStructure[];
 };
 
 export async function apiForGetMenuStructure(id: number): Promise<IResponseSingleMenuStructure> {
@@ -72,7 +72,7 @@ export async function apiForGetMenuStructure(id: number): Promise<IResponseSingl
 
     return {
       success: true,
-      data: data as IMenuStructure,
+      data: data as unknown as IMenuStructure,
       error: null
     };
   } catch (error) {
