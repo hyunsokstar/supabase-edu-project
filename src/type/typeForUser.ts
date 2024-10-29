@@ -1,3 +1,4 @@
+
 // src/type/typeForUser.ts
 export interface IUserRow {
     id: string;

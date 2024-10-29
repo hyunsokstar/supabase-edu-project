@@ -8,6 +8,14 @@ export interface MenuItemType {
 
 export const HEADER_MENU_ITEMS: MenuItemType[] = [
     {
+        key: "menu-admin",
+        name: "메뉴 관리",
+        items: [
+            { key: "menu-list", name: "메뉴 리스트", items: [] },
+            { key: "menu-update", name: "메뉴 등록/수정", items: [] }
+        ]
+    },
+    {
         key: "todo-management",
         name: "Todo 관리",
         items: [
@@ -45,7 +53,7 @@ export const HEADER_MENU_ITEMS: MenuItemType[] = [
                     { key: "team-members", name: "팀 멤버 관리" },
                     { key: "permissions", name: "권한 관리" }
                 ]
-            },
+            }
         ]
     },
     {
@@ -88,7 +96,6 @@ export const HEADER_MENU_ITEMS: MenuItemType[] = [
             }
         ]
     },
-    // 인사 관리
     {
         key: "hr-management",
         name: "인사 관리",
@@ -128,4 +135,5 @@ export const HEADER_MENU_ITEMS: MenuItemType[] = [
         ]
     }
 ];
+
 
