@@ -8,6 +8,8 @@ export interface ITodoItem {
     created_at: string;
     updated_at: string;
     user_id: string;
+    day_of_week: number;
+    order: number;
     users: {
         email: string;
         profile: {
@@ -15,6 +17,7 @@ export interface ITodoItem {
         };
     };
 }
+
 
 // src/type/typeForTodos.ts
 export interface IRequestParameterForApiForCreateTodo {

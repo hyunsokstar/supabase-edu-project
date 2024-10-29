@@ -1,24 +1,18 @@
-// src/app/todo-management/todo-dashboard/all-tasks/page.tsx
+// src/app/todo-management/todo-dashboard/all-tasks/TodoListPage.tsx
 "use client";
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash } from 'lucide-react';
-import useApiForDeleteTodo from '@/hooks/useApiForDeleteTodo';
 import DialogButtonForCreateTodo from '@/components/Button/DialogButtonForCreateTodo';
-import LoadingSkeletonForTodoList from './LoadingSkeletonForTodoList';
+import { Skeleton } from '@/components/ui/skeleton';
 import useApiForGetTodoList from '@/hooks/useApiForTodoList';
 
 const TodoListPage = () => {
     const { data: todoList, isLoading, error } = useApiForGetTodoList();
-    const deleteTodoMutation = useApiForDeleteTodo();
-
-    console.log("todoList", todoList);
 
     const handleDeleteTodo = async (todoId: number) => {
-        if (window.confirm('정말로 이 Todo를 삭제하시겠습니까?')) {
-            deleteTodoMutation.mutate(todoId);
-        }
+        // 삭제 로직
     };
 
     const getDayOfWeekName = (day: number): string => {
@@ -26,12 +20,61 @@ const TodoListPage = () => {
         return days[day] || "알 수 없음";
     };
 
-    // 로딩 중인 경우 LoadingSkeletonForTodoList 렌더링
     if (isLoading) {
-        return <LoadingSkeletonForTodoList />;
+        return (
+            <div className="container mx-auto p-4">
+                <div className="flex justify-between items-center mb-6">
+                    <Skeleton className="h-8 w-1/3 rounded-md" />
+                    <Skeleton className="h-10 w-32 rounded-md" />
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full bg-white border border-gray-300 rounded-md shadow-md">
+                        <thead className="bg-gray-100">
+                            <tr>
+                                {["User", "Title", "Description", "Completed", "Day of Week", "Order", "Actions"].map(
+                                    (header, index) => (
+                                        <th key={index} className="p-3 text-left">
+                                            <Skeleton className="h-4 w-full rounded-md" />
+                                        </th>
+                                    )
+                                )}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {Array.from({ length: 5 }).map((_, rowIndex) => (
+                                <tr key={rowIndex} className="border-b last:border-0 hover:bg-gray-50">
+                                    <td className="p-3">
+                                        <Skeleton className="w-10 h-10 rounded-full" />
+                                        <Skeleton className="h-4 mt-2 w-24 rounded-md" />
+                                    </td>
+                                    <td className="p-3">
+                                        <Skeleton className="h-4 w-full rounded-md" />
+                                    </td>
+                                    <td className="p-3">
+                                        <Skeleton className="h-4 w-full rounded-md" />
+                                    </td>
+                                    <td className="p-3">
+                                        <Skeleton className="h-4 w-8 rounded-md" />
+                                    </td>
+                                    <td className="p-3">
+                                        <Skeleton className="h-4 w-16 rounded-md" />
+                                    </td>
+                                    <td className="p-3">
+                                        <Skeleton className="h-4 w-12 rounded-md" />
+                                    </td>
+                                    <td className="p-3 text-center flex justify-center space-x-2">
+                                        <Skeleton className="w-5 h-5 rounded-md" />
+                                        <Skeleton className="w-5 h-5 rounded-md" />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
     }
 
-    // 에러 처리
     if (error) {
         return <div className="text-red-500 text-center">Failed to load todos.</div>;
     }
@@ -82,7 +125,6 @@ const TodoListPage = () => {
                                             size="icon"
                                             className="text-red-500 hover:text-red-700"
                                             onClick={() => handleDeleteTodo(todo.id)}
-                                            disabled={deleteTodoMutation.isPending}
                                         >
                                             <Trash className="w-5 h-5" />
                                         </Button>
