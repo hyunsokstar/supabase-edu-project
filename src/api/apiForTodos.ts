@@ -1,40 +1,103 @@
-// src/api/apiForTodos.ts
-import getSupabase from '@/lib/supabaseClient';
-import { IRequestParameterForApiForCreateTodo, IRequestTypeForApiForCreateMultiTodosWithMenuArray } from '@/type/typeForTodos';
+import { getSupabase } from '@/lib/supabaseClient';
 import useUserStore from '@/store/userStore';
+import { IRequestParameterForApiForCreateTodo, ITodoItem } from '@/type/typeForTodos';
 
-// apiForCreateMultiTodosWithMenuArray
-export const apiForCreateMultiTodosWithMenuArray = async (
-    request: Omit<IRequestTypeForApiForCreateMultiTodosWithMenuArray, 'userId'>[]
-  ) => {
+export const apiForMultiCreateTodosWithMenuArray = async (
+    menuArray: { first_menu: string; second_menu: string }[]
+) => {
     const supabase = getSupabase();
     const userStore = useUserStore.getState();
 
-    console.log("request : ", request);
-    
-
-    // 사용자 ID가 없는 경우 예외 처리
-    if (!userStore.id) {
-      throw new Error('로그인된 사용자를 찾을 수 없습니다.');
+    // 현재 로그인된 사용자 ID 가져오기
+    const userId = userStore?.id;
+    if (!userId) {
+        console.error("사용자 ID를 찾을 수 없습니다. 로그인이 필요합니다.");
+        return { error: "사용자 인증 실패" };
     }
-  
-    // 요청에 사용자 ID 추가
-    const requestWithUserId = request.map((req) => ({
-      ...req,
-      user_id: userStore.id,
-    }));
-  
-    // 데이터 삽입
-    const { data, error } = await supabase.from('todos').insert(requestWithUserId);
+
+    // 트랜잭션 시작
+    try {
+        // 1. 먼저 현재 사용자의 모든 todo 삭제
+        const { error: deleteError } = await supabase
+            .from('todos')
+            .delete()
+            .eq('user_id', userId);
+
+        if (deleteError) {
+            console.error('기존 할 일들을 삭제하는 중 오류가 발생했습니다:', deleteError);
+            return { error: deleteError };
+        }
+
+        console.log('기존 할 일들이 성공적으로 삭제되었습니다.');
+
+        // 2. 새로운 todo 항목들 추가
+        const todosToInsert = menuArray.map((menu) => ({
+            user_id: userId,
+            first_menu: menu.first_menu,
+            second_menu: menu.second_menu,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            is_completed: false,
+        }));
+
+        const { data: insertedData, error: insertError } = await supabase
+            .from('todos')
+            .insert(todosToInsert)
+            .select();
+
+        if (insertError) {
+            console.error('새로운 할 일들을 추가하는 중 오류가 발생했습니다:', insertError);
+            return { error: insertError };
+        }
+
+        console.log('성공적으로 새로운 할 일들이 추가되었습니다:', insertedData);
+        return { data: insertedData, error: null };
+
+    } catch (err) {
+        console.error('API 요청 중 오류가 발생했습니다:', err);
+        return { error: err };
+    }
+};
+
+export const apiForGetTodoList = async (): Promise<ITodoItem[]> => {
+    const supabase = getSupabase();
+    if (!supabase) {
+        throw new Error('Supabase 초기화 실패');
+    }
+
+    const { data, error } = await supabase
+        .from('todos')
+        .select(`
+            id,
+            title,
+            description,
+            created_at,
+            updated_at,
+            user_id,
+            day_of_week,
+            order,
+            first_menu,
+            second_menu,
+            is_completed,
+            status_changed_at,
+            users (
+                email,
+                profile (
+                    user_image
+                )
+            )
+        `)
+        .order('first_menu', { ascending: true })
+        .order('order', { ascending: true });
+
     if (error) {
-      throw new Error(`Failed to insert todos: ${error.message}`);
+        throw new Error(`Todo 리스트를 불러오는 중 오류가 발생했습니다: ${error.message}`);
     }
-    
-    // 삽입된 데이터 로그로 확인
-    console.log('삽입된 데이터:', data);
 
-    return data;
-  };
+    console.log("Raw data from Supabase:", data);
+
+    return data as unknown as ITodoItem[];
+};
 
 
 export const apiForCreateTodo = async (todo: IRequestParameterForApiForCreateTodo): Promise<void> => {
@@ -99,41 +162,4 @@ export const apiForDeleteTodo = async (todoId: number): Promise<void> => {
 
 
 // todo 리스트 조회
-export const apiForGetTodoList = async (): Promise<ITodoItem[]> => {
-    const supabase = getSupabase();
-    if (!supabase) {
-        throw new Error('Supabase 초기화 실패');
-    }
 
-    const { data, error } = await supabase
-        .from('todos')
-        .select(`
-            id,
-            title,
-            description,
-            created_at,
-            updated_at,
-            user_id,
-            day_of_week,
-            order,
-            first_menu,
-            second_menu,
-            status,
-            status_changed_at,
-            users (
-                email,
-                profile (
-                    user_image
-                )
-            )
-        `)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        throw new Error(`Todo 리스트를 불러오는 중 오류가 발생했습니다: ${error.message}`);
-    }
-
-    console.log("Raw data from Supabase:", data);
-
-    return data as unknown as ITodoItem[];
-};

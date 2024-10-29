@@ -1,5 +1,3 @@
-// src/app/menu-admin/menu-list/page.tsx
-
 "use client";
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
@@ -15,22 +13,74 @@ import {
 } from "@/components/ui/table";
 import { Plus, Eye } from "lucide-react";
 import useApiForGetMenuStructureList from '@/hooks/useApiForGetMenuStructureList';
+import useApiForMultiCreateTodo from '@/hooks/useApiForMultiCreateTodo';
 import { IMenuStructure } from '@/type/typeForMenuStructure';
 import { format } from 'date-fns';
+import { flattenMenuStructure } from '@/lib/flattenMenu';
 
 const MenuListPage = () => {
     const [selectedMenu, setSelectedMenu] = useState<IMenuStructure | null>(null);
     const { data: menuData, isLoading, error } = useApiForGetMenuStructureList();
-
-    console.log("menuData : ", menuData);  // 데이터 구조 확인용 로그
+    const [textareaContent, setTextareaContent] = useState(""); // 배열을 위한 Textarea 상태
+    const [jsonError, setJsonError] = useState<string | null>(null); // 배열 오류 상태
+    const { mutate: createTodos } = useApiForMultiCreateTodo();
 
     const handleRowClick = (menu: IMenuStructure) => {
         setSelectedMenu(menu);
+        setTextareaContent(
+            typeof menu.menu_structure === "string"
+                ? menu.menu_structure
+                : JSON.stringify(menu.menu_structure, null, 2)
+        );
+        setJsonError(null); // 메뉴 클릭 시 오류 초기화
+    };
+
+    const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const value = e.target.value;
+        setTextareaContent(value);
+
+        try {
+            // 배열 또는 객체 파싱 시도
+            let updatedStructure;
+
+            // 사용자가 배열이나 객체 형식으로 입력했는지 검사
+            if (value.trim().startsWith("[") || value.trim().startsWith("{")) {
+                updatedStructure = JSON.parse(value); // 배열 또는 객체 파싱
+            } else {
+                throw new Error("유효한 배열이나 객체 형식이 아닙니다.");
+            }
+
+            if (!Array.isArray(updatedStructure) && typeof updatedStructure !== 'object') {
+                throw new Error("입력된 데이터가 배열 또는 객체 형식이 아닙니다.");
+            }
+
+            setJsonError(null); // 유효한 배열이나 객체면 오류 메시지 초기화
+            setSelectedMenu({ ...selectedMenu, menu_structure: updatedStructure });
+        } catch (error) {
+            setJsonError("유효한 배열 또는 객체 형식이 아닙니다. 형식을 확인해 주세요.");
+        }
+    };
+
+    const handleUpdateClick = () => {
+        if (!selectedMenu) return;
+
+        try {
+            const menuStructure = typeof selectedMenu.menu_structure === 'string'
+                ? JSON.parse(selectedMenu.menu_structure)
+                : selectedMenu.menu_structure;
+
+            const flattenedMenus = flattenMenuStructure(menuStructure);
+            console.log('변환된 메뉴 구조:', JSON.stringify(flattenedMenus, null, 2));
+
+            // Supabase에 변환된 메뉴 구조로 할 일들 추가
+            createTodos(flattenedMenus);
+        } catch (error) {
+            console.error("메뉴 구조 처리 중 오류 발생:", error);
+        }
     };
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
-            {/* 헤더 섹션 */}
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-2xl font-bold">메뉴 구조 관리</h1>
@@ -44,9 +94,7 @@ const MenuListPage = () => {
                 </Button>
             </div>
 
-            {/* 분할된 메인 컨텐츠 */}
             <div className="grid grid-cols-2 gap-6">
-                {/* 왼쪽: 메뉴 정보 테이블 */}
                 <Card>
                     <div className="overflow-x-auto">
                         <Table>
@@ -81,7 +129,7 @@ const MenuListPage = () => {
                                             className="cursor-pointer hover:bg-gray-50"
                                         >
                                             <TableCell>
-                                                <input type="checkbox" aria-label={`Select menu ${menu.id}`} />
+                                                <input type="checkbox" />
                                             </TableCell>
                                             <TableCell
                                                 onClick={() => handleRowClick(menu)}
@@ -125,7 +173,6 @@ const MenuListPage = () => {
                     </div>
                 </Card>
 
-                {/* 오른쪽: 메뉴 구조 상세 */}
                 <Card className="p-4">
                     {selectedMenu ? (
                         <div className="space-y-4">
@@ -135,13 +182,24 @@ const MenuListPage = () => {
                                         최종 수정: {format(new Date(selectedMenu.updated_at), 'yyyy-MM-dd')}
                                     </p>
                                 </div>
-                                <Button variant="outline" size="sm">수정</Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleUpdateClick}
+                                    disabled={!!jsonError} // 배열 오류가 있을 때 버튼 비활성화
+                                >
+                                    반영
+                                </Button>
                             </div>
                             <Textarea
-                                className="min-h-[600px] font-mono"
-                                value={JSON.stringify(selectedMenu.menu_structure, null, 2)}
-                                readOnly
+                                className="min-h-[600px] font-mono text-sm"
+                                value={textareaContent}
+                                onChange={handleTextareaChange}
+                                placeholder="메뉴 구조 배열을 입력하세요..."
                             />
+                            {jsonError && (
+                                <p className="text-red-500 text-sm mt-2">{jsonError}</p>
+                            )}
                         </div>
                     ) : (
                         <div className="h-[600px] flex items-center justify-center text-gray-500">

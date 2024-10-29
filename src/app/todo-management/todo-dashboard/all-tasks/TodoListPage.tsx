@@ -7,13 +7,17 @@ import { Edit, Trash } from 'lucide-react';
 import DialogButtonForCreateTodo from '@/components/Button/DialogButtonForCreateTodo';
 import { Skeleton } from '@/components/ui/skeleton';
 import useApiForGetTodoList from '@/hooks/useApiForTodoList';
-import { format } from 'date-fns';
 
 const TodoListPage = () => {
     const { data: todoList, isLoading, error } = useApiForGetTodoList();
 
     const handleDeleteTodo = async (todoId: number) => {
         // 삭제 로직
+    };
+
+    const getDayOfWeekName = (day: number): string => {
+        const days = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
+        return days[day] || "알 수 없음";
     };
 
     if (isLoading) {
@@ -27,7 +31,7 @@ const TodoListPage = () => {
                     <table className="min-w-full bg-white border border-gray-300 rounded-md shadow-md">
                         <thead className="bg-gray-100">
                             <tr>
-                                {["First Menu", "Second Menu", "Status", "Status Changed At", "User", "Actions"].map(
+                                {["User", "Title", "Description", "Completed", "Day of Week", "Order", "Actions"].map(
                                     (header, index) => (
                                         <th key={index} className="p-3 text-left">
                                             <Skeleton className="h-4 w-full rounded-md" />
@@ -39,13 +43,24 @@ const TodoListPage = () => {
                         <tbody>
                             {Array.from({ length: 5 }).map((_, rowIndex) => (
                                 <tr key={rowIndex} className="border-b last:border-0 hover:bg-gray-50">
-                                    <td className="p-3"><Skeleton className="h-4 w-full rounded-md" /></td>
-                                    <td className="p-3"><Skeleton className="h-4 w-full rounded-md" /></td>
-                                    <td className="p-3"><Skeleton className="h-4 w-full rounded-md" /></td>
-                                    <td className="p-3"><Skeleton className="h-4 w-full rounded-md" /></td>
                                     <td className="p-3">
                                         <Skeleton className="w-10 h-10 rounded-full" />
                                         <Skeleton className="h-4 mt-2 w-24 rounded-md" />
+                                    </td>
+                                    <td className="p-3">
+                                        <Skeleton className="h-4 w-full rounded-md" />
+                                    </td>
+                                    <td className="p-3">
+                                        <Skeleton className="h-4 w-full rounded-md" />
+                                    </td>
+                                    <td className="p-3">
+                                        <Skeleton className="h-4 w-8 rounded-md" />
+                                    </td>
+                                    <td className="p-3">
+                                        <Skeleton className="h-4 w-16 rounded-md" />
+                                    </td>
+                                    <td className="p-3">
+                                        <Skeleton className="h-4 w-12 rounded-md" />
                                     </td>
                                     <td className="p-3 text-center flex justify-center space-x-2">
                                         <Skeleton className="w-5 h-5 rounded-md" />
@@ -76,28 +91,31 @@ const TodoListPage = () => {
                     <table className="min-w-full bg-white border border-gray-300 rounded-md shadow-md">
                         <thead className="bg-gray-100">
                             <tr>
-                                <th className="p-3 text-left w-[150px]">First Menu</th>
-                                <th className="p-3 text-left w-[150px]">Second Menu</th>
-                                <th className="p-3 text-left w-[100px]">Status</th>
-                                <th className="p-3 text-left w-[150px]">Status Changed At</th>
-                                <th className="p-3 text-left w-[200px]">User</th>
-                                <th className="p-3 text-center w-[100px]">Actions</th>
+                                <th className="p-3 text-left">User</th>
+                                <th className="p-3 text-left">Title</th>
+                                <th className="p-3 text-left">Description</th>
+                                <th className="p-3 text-left">Completed</th>
+                                <th className="p-3 text-left">Day of Week</th>
+                                <th className="p-3 text-left">Order</th>
+                                <th className="p-3 text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {todoList.map((todo) => (
                                 <tr key={todo.id} className="border-b last:border-0 hover:bg-gray-50">
-                                    <td className="p-3">{todo.first_menu || 'N/A'}</td>
-                                    <td className="p-3">{todo.second_menu || 'N/A'}</td>
-                                    <td className="p-3">{todo.status || 'Unknown'}</td>
-                                    <td className="p-3">{format(new Date(todo.status_changed_at), 'yyyy-MM-dd')}</td>
-                                    <td className="p-3 flex items-center space-x-3">
+                                    <td className="p-3 flex items-center">
                                         <img
                                             src={todo.users.profile.user_image || 'https://via.placeholder.com/40'}
                                             alt="User Avatar"
-                                            className="w-10 h-10 rounded-full object-cover"
+                                            className="w-10 h-10 rounded-full mr-3"
                                         />
+                                        <span>{todo.users.email || 'Unknown User'}</span>
                                     </td>
+                                    <td className="p-3">{todo.title}</td>
+                                    <td className="p-3">{todo.description || 'No description'}</td>
+                                    <td className="p-3">{todo.is_completed ? 'Yes' : 'No'}</td>
+                                    <td className="p-3">{getDayOfWeekName(todo.day_of_week)}</td>
+                                    <td className="p-3">{todo.order}</td>
                                     <td className="p-3 text-center flex justify-center space-x-2">
                                         <Button variant="ghost" size="icon" className="text-blue-500 hover:text-blue-700">
                                             <Edit className="w-5 h-5" />

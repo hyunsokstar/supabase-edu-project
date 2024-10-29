@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,9 +13,8 @@ import {
 } from "@/components/ui/table";
 import { Eye } from "lucide-react";
 import useApiForGetMenuStructureList from "@/hooks/useApiForGetMenuStructureList";
-import useApiForCreateMultiTodosWithMenuArray from "@/hooks/useApiForCreateMultiTodosWithMenuArray";
+import useApiForMultiCreateTodo from "@/hooks/useApiForMultiCreateTodo";
 import { IMenuStructure } from "@/type/typeForMenuStructure";
-import { IRequestTypeForApiForCreateMultiTodosWithMenuArray } from "@/type/typeForTodos";
 import { format } from "date-fns";
 import { Textarea } from "@/components/ui/textarea";
 import useUserStore from "@/store/userStore";
@@ -24,8 +24,7 @@ const DialogButtonForMenuStructureListForSelect = () => {
   const [selectedMenu, setSelectedMenu] = useState<IMenuStructure | null>(null);
   const [editableJson, setEditableJson] = useState<string | null>(null);
   const { data: menuData, isLoading, error } = useApiForGetMenuStructureList();
-  
-  const createMultiTodosMutation = useApiForCreateMultiTodosWithMenuArray();
+  const { mutate: createTodos } = useApiForMultiCreateTodo();
 
   const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setEditableJson(event.target.value);
@@ -37,63 +36,29 @@ const DialogButtonForMenuStructureListForSelect = () => {
   };
 
   const handleSaveChanges = () => {
-    if (selectedMenu && editableJson) {
-      try {
-        const updatedStructure = JSON.parse(editableJson);
-        setSelectedMenu({
-          ...selectedMenu,
-          menu_structure: updatedStructure,
-        });
-        alert("Changes saved successfully!");
-      } catch (error) {
-        alert("Invalid JSON format. Please correct and try again.");
-      }
-    }
-  };
+    if (!selectedMenu || !editableJson) return;
 
-  const handleAllChange = () => {
-    if (editableJson) {
-      try {
-        const menuStructure = JSON.parse(editableJson);
-        // JSON 파싱 결과가 배열인지 확인
-        if (!Array.isArray(menuStructure)) {
-          throw new Error("Parsed JSON is not an array. Please ensure the JSON is in array format.");
-        }
+    try {
+      const updatedStructure = JSON.parse(editableJson);
+      const flattenedMenus = flattenMenuStructure(updatedStructure);
 
-        // 메뉴 구조에서 최상위와 하위 메뉴 쌍을 추출
-        const menuPairs: IRequestTypeForApiForCreateMultiTodosWithMenuArray[] = [];
-        menuStructure.forEach((menu) => {
-          const pairs = extractMenuPairs([menu]);
-          menuPairs.push(...pairs);
-        });
-
-        // user ID 추가 및 API 호출
-        const userStore = useUserStore.getState();
-        if (!userStore.id) {
-          throw new Error('로그인된 사용자를 찾을 수 없습니다.');
-        }
-
-        const requestWithUserId = menuPairs.map((pair) => ({
-          ...pair,
-          user_id: userStore.id,
-        }));
-
-        createMultiTodosMutation.mutate(requestWithUserId);
-      } catch (error) {
-        alert(`Invalid JSON format or error occurred: ${error.message}`);
-      }
+      // Supabase에 변환된 메뉴 구조로 할 일들 추가
+      createTodos(flattenedMenus);
+      setOpen(false);
+    } catch (error) {
+      alert("유효한 JSON 형식이 아닙니다. 형식을 확인해 주세요.");
     }
   };
 
   // 트리 구조에서 최상위 메뉴와 최하위 메뉴 쌍을 추출하는 함수
-  const extractMenuPairs = (menuItems: IMenuStructure[], firstMenu: string = ""): IRequestTypeForApiForCreateMultiTodosWithMenuArray[] => {
-    let menuPairs: IRequestTypeForApiForCreateMultiTodosWithMenuArray[] = [];
+  const flattenMenuStructure = (menuItems: IMenuStructure[], firstMenu: string = ""): { first_menu: string; second_menu: string }[] => {
+    let menuPairs: { first_menu: string; second_menu: string }[] = [];
 
     menuItems.forEach((item) => {
       const currentFirstMenu = firstMenu || item.name;
 
       if (item.items && item.items.length > 0) {
-        menuPairs = menuPairs.concat(extractMenuPairs(item.items, currentFirstMenu));
+        menuPairs = menuPairs.concat(flattenMenuStructure(item.items, currentFirstMenu));
       } else {
         menuPairs.push({
           first_menu: currentFirstMenu,
@@ -125,7 +90,7 @@ const DialogButtonForMenuStructureListForSelect = () => {
                     <TableHead>분류</TableHead>
                     <TableHead>생성 날짜</TableHead>
                     <TableHead>생성자</TableHead>
-                    <TableHead>전체 update</TableHead>
+                    <TableHead>반영</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -171,8 +136,8 @@ const DialogButtonForMenuStructureListForSelect = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button variant="outline" size="sm" className="text-blue-600" onClick={handleAllChange}>
-                              All Change
+                            <Button variant="outline" size="sm" className="text-blue-600" onClick={handleSaveChanges}>
+                              반영
                             </Button>
                           </div>
                         </TableCell>
@@ -199,9 +164,6 @@ const DialogButtonForMenuStructureListForSelect = () => {
                         최종 수정: {format(new Date(selectedMenu.updated_at), "yyyy-MM-dd")}
                       </p>
                     </div>
-                    <Button variant="outline" size="sm" onClick={handleSaveChanges}>
-                      저장
-                    </Button>
                   </div>
                   <Textarea
                     className="min-h-[600px] font-mono w-full"
