@@ -13,9 +13,10 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { Plus, Eye } from "lucide-react";  // Eye 아이콘 추가
+import { Plus, Eye } from "lucide-react";
 import useApiForGetMenuStructureList from '@/hooks/useApiForGetMenuStructureList';
 import { IMenuStructure } from '@/type/typeForMenuStructure';
+import { format } from 'date-fns';
 
 const MenuListPage = () => {
     const [selectedMenu, setSelectedMenu] = useState<IMenuStructure | null>(null);
@@ -51,22 +52,25 @@ const MenuListPage = () => {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[200px]">ID</TableHead>
+                                    <TableHead className="w-[50px]">
+                                        <input type="checkbox" aria-label="Select all" />
+                                    </TableHead>
                                     <TableHead className="w-[300px]">설명</TableHead>
                                     <TableHead className="w-[150px]">분류</TableHead>
+                                    <TableHead>생성 날짜</TableHead>
                                     <TableHead>생성자</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {isLoading ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center h-32 text-gray-500">
+                                        <TableCell colSpan={5} className="text-center h-32 text-gray-500">
                                             로딩 중...
                                         </TableCell>
                                     </TableRow>
                                 ) : error ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center h-32 text-red-500">
+                                        <TableCell colSpan={5} className="text-center h-32 text-red-500">
                                             데이터를 불러오는 중 오류가 발생했습니다.
                                         </TableCell>
                                     </TableRow>
@@ -77,10 +81,7 @@ const MenuListPage = () => {
                                             className="cursor-pointer hover:bg-gray-50"
                                         >
                                             <TableCell>
-                                                <div className="font-medium">{menu.id}</div>
-                                                <div className="text-xs text-gray-500 mt-1">
-                                                    {menu.created_at}
-                                                </div>
+                                                <input type="checkbox" aria-label={`Select menu ${menu.id}`} />
                                             </TableCell>
                                             <TableCell
                                                 onClick={() => handleRowClick(menu)}
@@ -97,6 +98,11 @@ const MenuListPage = () => {
                                                 </div>
                                             </TableCell>
                                             <TableCell>
+                                                <div className="text-xs text-gray-500">
+                                                    {format(new Date(menu.created_at), 'yyyy-MM-dd')}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
                                                 <div className="flex items-center">
                                                     <img
                                                         src={menu.users?.profile?.user_image || "/default-avatar.png"}
@@ -109,7 +115,7 @@ const MenuListPage = () => {
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center h-32 text-gray-500">
+                                        <TableCell colSpan={5} className="text-center h-32 text-gray-500">
                                             등록된 메뉴 구조가 없습니다
                                         </TableCell>
                                     </TableRow>
@@ -127,7 +133,7 @@ const MenuListPage = () => {
                                 <div>
                                     <h2 className="text-lg font-semibold">{selectedMenu.id}</h2>
                                     <p className="text-sm text-gray-500">
-                                        최종 수정: {selectedMenu.updated_at}
+                                        최종 수정: {format(new Date(selectedMenu.updated_at), 'yyyy-MM-dd')}
                                     </p>
                                 </div>
                                 <Button variant="outline" size="sm">수정</Button>
