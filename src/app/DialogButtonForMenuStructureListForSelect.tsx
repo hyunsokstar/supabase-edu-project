@@ -16,48 +16,29 @@ import useApiForGetMenuStructureList from "@/hooks/useApiForGetMenuStructureList
 import useApiForMultiCreateTodo from "@/hooks/useApiForMultiCreateTodo";
 import { IMenuStructure } from "@/type/typeForMenuStructure";
 import { format } from "date-fns";
-import { Textarea } from "@/components/ui/textarea";
-import useUserStore from "@/store/userStore";
+import Editor from "@monaco-editor/react"; // Monaco Editor 사용
 
 const DialogButtonForMenuStructureListForSelect = () => {
   const [open, setOpen] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState<IMenuStructure | null>(null);
-  const [textareaContent, setTextareaContent] = useState<string>("");
+  const [editorContent, setEditorContent] = useState<string>("");
   const [jsonError, setJsonError] = useState<string | null>(null);
   const { data: menuData, isLoading, error } = useApiForGetMenuStructureList();
   const { mutate: createTodos } = useApiForMultiCreateTodo();
 
   const handleMenuSelect = (menu: IMenuStructure) => {
     setSelectedMenu(menu);
-    setTextareaContent(
+    setEditorContent(
       typeof menu.menu_structure === "string"
-        ? menu.menu_structure
-        : JSON.stringify(menu.menu_structure, null, 2)
+        ? JSON.stringify(JSON.parse(menu.menu_structure), null, 2) // JSON 포맷 적용
+        : JSON.stringify(menu.menu_structure, null, 2) // JSON 포맷 적용
     );
     setJsonError(null);
   };
 
-  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    setTextareaContent(value);
-
-    try {
-      let updatedStructure;
-
-      if (value.trim().startsWith("[") || value.trim().startsWith("{")) {
-        updatedStructure = JSON.parse(value);
-      } else {
-        throw new Error("유효한 배열이나 객체 형식이 아닙니다.");
-      }
-
-      if (!Array.isArray(updatedStructure) && typeof updatedStructure !== 'object') {
-        throw new Error("입력된 데이터가 배열 또는 객체 형식이 아닙니다.");
-      }
-
-      setJsonError(null);
-      setSelectedMenu({ ...selectedMenu, menu_structure: updatedStructure });
-    } catch (error) {
-      setJsonError("유효한 배열 또는 객체 형식이 아닙니다. 형식을 확인해 주세요.");
+  const handleEditorChange = (value: string | undefined) => {
+    if (value !== undefined) {
+      setEditorContent(value);
     }
   };
 
@@ -65,16 +46,19 @@ const DialogButtonForMenuStructureListForSelect = () => {
     if (!selectedMenu) return;
 
     try {
-      const menuStructure = typeof selectedMenu.menu_structure === 'string'
-        ? JSON.parse(selectedMenu.menu_structure)
-        : selectedMenu.menu_structure;
+      const updatedStructure = JSON.parse(editorContent);
+      if (!Array.isArray(updatedStructure) && typeof updatedStructure !== 'object') {
+        throw new Error("입력된 데이터가 배열 또는 객체 형식이 아닙니다.");
+      }
 
-      const flattenedMenus = flattenMenuStructure(menuStructure);
+      setJsonError(null);
+      setSelectedMenu({ ...selectedMenu, menu_structure: updatedStructure });
+
+      const flattenedMenus = flattenMenuStructure(updatedStructure);
       console.log('변환된 메뉴 구조:', JSON.stringify(flattenedMenus, null, 2));
-
       createTodos(flattenedMenus);
     } catch (error) {
-      console.error("메뉴 구조 처리 중 오류 발생:", error);
+      setJsonError("유효한 배열 또는 객체 형식이 아닙니다. 형식을 확인해 주세요.");
     }
   };
 
@@ -201,10 +185,19 @@ const DialogButtonForMenuStructureListForSelect = () => {
                       반영
                     </Button>
                   </div>
-                  <Textarea
-                    className="min-h-[600px] font-mono w-full"
-                    value={textareaContent || ""}
-                    onChange={handleTextareaChange}
+                  <Editor
+                    height="600px"
+                    defaultLanguage="json"
+                    value={editorContent}
+                    onChange={handleEditorChange}
+                    options={{
+                      minimap: { enabled: false },
+                      wordWrap: "on",
+                      formatOnType: true,
+                      tabSize: 2,
+                      insertSpaces: true,
+                      autoIndent: "full",
+                    }}
                   />
                   {jsonError && (
                     <p className="text-red-500 text-sm mt-2">{jsonError}</p>
