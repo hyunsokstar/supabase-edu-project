@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
 import {
     Table,
     TableBody,
@@ -17,65 +16,55 @@ import useApiForMultiCreateTodo from '@/hooks/useApiForMultiCreateTodo';
 import { IMenuStructure } from '@/type/typeForMenuStructure';
 import { format } from 'date-fns';
 import { flattenMenuStructure } from '@/lib/flattenMenu';
+import Editor from "@monaco-editor/react";
 
 const MenuListPage = () => {
     const [selectedMenu, setSelectedMenu] = useState<IMenuStructure | null>(null);
     const { data: menuData, isLoading, error } = useApiForGetMenuStructureList();
-    const [textareaContent, setTextareaContent] = useState(""); // 배열을 위한 Textarea 상태
-    const [jsonError, setJsonError] = useState<string | null>(null); // 배열 오류 상태
+    const [editorContent, setEditorContent] = useState<string>('');
+    const [jsonError, setJsonError] = useState<string | null>(null);
     const { mutate: createTodos } = useApiForMultiCreateTodo();
 
     const handleRowClick = (menu: IMenuStructure) => {
         setSelectedMenu(menu);
-        setTextareaContent(
-            typeof menu.menu_structure === "string"
-                ? menu.menu_structure
-                : JSON.stringify(menu.menu_structure, null, 2)
-        );
-        setJsonError(null); // 메뉴 클릭 시 오류 초기화
+        setJsonError(null);
+
+        let contentToSet = '';
+        try {
+            const menuStructure = typeof menu.menu_structure === 'string'
+                ? JSON.parse(menu.menu_structure)
+                : menu.menu_structure;
+            contentToSet = JSON.stringify(menuStructure, null, 2);
+            setEditorContent(contentToSet);
+        } catch (error) {
+            console.error('메뉴 구조 파싱 에러:', error);
+            setEditorContent('[]');
+        }
     };
 
-    const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        const value = e.target.value;
-        setTextareaContent(value);
+    const handleEditorChange = (value: string | undefined) => {
+        if (!value) return;
 
         try {
-            // 배열 또는 객체 파싱 시도
-            let updatedStructure;
-
-            // 사용자가 배열이나 객체 형식으로 입력했는지 검사
-            if (value.trim().startsWith("[") || value.trim().startsWith("{")) {
-                updatedStructure = JSON.parse(value); // 배열 또는 객체 파싱
-            } else {
-                throw new Error("유효한 배열이나 객체 형식이 아닙니다.");
-            }
-
-            if (!Array.isArray(updatedStructure) && typeof updatedStructure !== 'object') {
-                throw new Error("입력된 데이터가 배열 또는 객체 형식이 아닙니다.");
-            }
-
-            setJsonError(null); // 유효한 배열이나 객체면 오류 메시지 초기화
-            setSelectedMenu({ ...selectedMenu, menu_structure: updatedStructure });
+            JSON.parse(value); // 유효성 검사
+            setJsonError(null);
+            setEditorContent(value);
         } catch (error) {
-            setJsonError("유효한 배열 또는 객체 형식이 아닙니다. 형식을 확인해 주세요.");
+            setJsonError("유효한 JSON 형식이 아닙니다.");
         }
     };
 
     const handleUpdateClick = () => {
-        if (!selectedMenu) return;
+        if (!selectedMenu || !editorContent) return;
 
         try {
-            const menuStructure = typeof selectedMenu.menu_structure === 'string'
-                ? JSON.parse(selectedMenu.menu_structure)
-                : selectedMenu.menu_structure;
-
-            const flattenedMenus = flattenMenuStructure(menuStructure);
-            console.log('변환된 메뉴 구조:', JSON.stringify(flattenedMenus, null, 2));
-
-            // Supabase에 변환된 메뉴 구조로 할 일들 추가
+            const parsedContent = JSON.parse(editorContent);
+            const flattenedMenus = flattenMenuStructure(parsedContent);
+            console.log('변환된 메뉴 구조:', flattenedMenus);
             createTodos(flattenedMenus);
         } catch (error) {
             console.error("메뉴 구조 처리 중 오류 발생:", error);
+            setJsonError("메뉴 구조 처리 중 오류가 발생했습니다.");
         }
     };
 
@@ -129,7 +118,7 @@ const MenuListPage = () => {
                                             className="cursor-pointer hover:bg-gray-50"
                                         >
                                             <TableCell>
-                                                <input type="checkbox" />
+                                                <input type="checkbox" aria-label={`Select menu ${menu.id}`} />
                                             </TableCell>
                                             <TableCell
                                                 onClick={() => handleRowClick(menu)}
@@ -186,16 +175,25 @@ const MenuListPage = () => {
                                     variant="outline"
                                     size="sm"
                                     onClick={handleUpdateClick}
-                                    disabled={!!jsonError} // 배열 오류가 있을 때 버튼 비활성화
+                                    disabled={!!jsonError}
                                 >
                                     반영
                                 </Button>
                             </div>
-                            <Textarea
-                                className="min-h-[600px] font-mono text-sm"
-                                value={textareaContent}
-                                onChange={handleTextareaChange}
-                                placeholder="메뉴 구조 배열을 입력하세요..."
+                            <Editor
+                                height="600px"
+                                defaultLanguage="json"
+                                value={editorContent}
+                                onChange={handleEditorChange}
+                                options={{
+                                    minimap: { enabled: false },
+                                    wordWrap: "on",
+                                    formatOnType: true,
+                                    tabSize: 2,
+                                    insertSpaces: true,
+                                    autoIndent: "advanced",
+                                    detectIndentation: false,
+                                }}
                             />
                             {jsonError && (
                                 <p className="text-red-500 text-sm mt-2">{jsonError}</p>

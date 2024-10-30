@@ -85,7 +85,7 @@ const TodoListPage = () => {
     return (
         <div className="container mx-auto p-4">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Todo List</h1>
+                <h1 className="text-2xl font-bold text-center">Todo List</h1>
                 <div className="flex items-center space-x-4">
                     <DialogButtonForCreateTodo />
                     <DialogButtonForMenuStructureListForSelect />
@@ -109,19 +109,19 @@ const TodoListPage = () => {
                     <table className="min-w-full bg-white border border-gray-300 rounded-md shadow-md">
                         <thead className="bg-gray-100 border-b border-gray-300">
                             <tr>
-                                <th className="p-3 text-left w-[50px] border-r border-gray-300">Select</th>
-                                <th className="p-3 text-left w-[150px] border-r border-gray-300">First Menu</th>
-                                <th className="p-3 text-left w-[150px] border-r border-gray-300">Second Menu</th>
-                                <th className="p-3 text-left w-[100px] border-r border-gray-300">Completed</th>
-                                <th className="p-3 text-left w-[200px] border-r border-gray-300">User</th>
+                                <th className="p-3 text-center w-[50px] border-r border-gray-300">Select</th>
+                                <th className="p-3 text-center w-[150px] border-r border-gray-300">First Menu</th>
+                                <th className="p-3 text-center w-[150px] border-r border-gray-300">Second Menu</th>
+                                <th className="p-3 text-center w-[100px] border-r border-gray-300">Completed</th>
+                                <th className="p-3 text-center w-[200px] border-r border-gray-300">User</th>
                                 <th className="p-3 text-center w-[100px] border-r border-gray-300">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {groupedTodos.map((group, groupIndex) => (
                                 group.todos.map((todo, todoIndex) => (
-                                    <tr key={todo.id} className="border-b last:border-0 hover:bg-gray-50">
-                                        <td className="p-3 text-center border-r border-gray-300">
+                                    <tr key={todo.id} className="border-b last:border-0">
+                                        <td className="p-3 text-center border-r border-gray-300 hover:bg-gray-50">
                                             <input
                                                 type="checkbox"
                                                 checked={selectedTodos.includes(todo.id)}
@@ -130,12 +130,12 @@ const TodoListPage = () => {
                                             />
                                         </td>
                                         {todoIndex === 0 && (
-                                            <td className="p-3 border-r border-gray-300" rowSpan={group.rowspan}>
+                                            <td className="p-3 text-center border-r border-gray-300 hover:bg-gray-50" rowSpan={group.rowspan}>
                                                 {group.firstMenu || 'N/A'}
                                             </td>
                                         )}
-                                        <td className="p-3 border-r border-gray-300">{todo.second_menu || 'N/A'}</td>
-                                        <td className="p-3 border-r border-gray-300">
+                                        <td className="p-3 text-center border-r border-gray-300 hover:bg-gray-50">{todo.second_menu || 'N/A'}</td>
+                                        <td className="p-3 text-center border-r border-gray-300 hover:bg-gray-50">
                                             <input
                                                 type="checkbox"
                                                 checked={todo.is_completed}
@@ -143,14 +143,14 @@ const TodoListPage = () => {
                                                 className="form-checkbox h-5 w-5 text-green-600"
                                             />
                                         </td>
-                                        <td className="p-3 border-r border-gray-300 flex items-center space-x-3">
+                                        <td className="p-3 text-center border-r border-gray-300 hover:bg-gray-50 flex items-center justify-center space-x-3">
                                             <img
                                                 src={todo.users.profile.user_image || 'https://via.placeholder.com/40'}
                                                 alt="User Avatar"
                                                 className="w-10 h-10 rounded-full object-cover"
                                             />
                                         </td>
-                                        <td className="p-3 text-center border-r border-gray-300">
+                                        <td className="p-3 text-center border-r border-gray-300 hover:bg-gray-50">
                                             <div className="flex items-center justify-center space-x-2">
                                                 <Button variant="ghost" size="icon" className="text-blue-500 hover:text-blue-700">
                                                     <Edit className="w-5 h-5" />
