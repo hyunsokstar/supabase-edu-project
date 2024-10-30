@@ -1,13 +1,26 @@
 import { apiForMultiCreateTodosWithMenuArray } from "@/api/apiForTodos";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
+import { useState } from "react";
 
 const useApiForMultiCreateTodo = () => {
     const queryClient = useQueryClient();
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<Error | null>(null);
 
-    return useMutation({
-        mutationFn: (menuArray: { first_menu: string; second_menu: string }[]) =>
-            apiForMultiCreateTodosWithMenuArray(menuArray),
+    const mutation = useMutation({
+        mutationFn: async (menuArray: { first_menu: string; second_menu: string }[]) => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                await apiForMultiCreateTodosWithMenuArray(menuArray);
+            } catch (err) {
+                setError(err as Error);
+                throw err;
+            } finally {
+                setIsLoading(false);
+            }
+        },
         onSuccess: () => {
             // Todo 리스트 캐시 무효화
             queryClient.invalidateQueries({ queryKey: ['todoList'] });
@@ -24,6 +37,8 @@ const useApiForMultiCreateTodo = () => {
             });
         }
     });
+
+    return { ...mutation, isLoading, error };
 };
 
 export default useApiForMultiCreateTodo;

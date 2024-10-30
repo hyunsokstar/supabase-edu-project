@@ -22,35 +22,62 @@ import useUserStore from "@/store/userStore";
 const DialogButtonForMenuStructureListForSelect = () => {
   const [open, setOpen] = useState(false);
   const [selectedMenu, setSelectedMenu] = useState<IMenuStructure | null>(null);
-  const [editableJson, setEditableJson] = useState<string | null>(null);
+  const [textareaContent, setTextareaContent] = useState<string>("");
+  const [jsonError, setJsonError] = useState<string | null>(null);
   const { data: menuData, isLoading, error } = useApiForGetMenuStructureList();
   const { mutate: createTodos } = useApiForMultiCreateTodo();
 
-  const handleTextChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditableJson(event.target.value);
-  };
-
   const handleMenuSelect = (menu: IMenuStructure) => {
     setSelectedMenu(menu);
-    setEditableJson(JSON.stringify(menu.menu_structure, null, 2)); // JSON 보기 좋게 변환하여 상태에 저장
+    setTextareaContent(
+      typeof menu.menu_structure === "string"
+        ? menu.menu_structure
+        : JSON.stringify(menu.menu_structure, null, 2)
+    );
+    setJsonError(null);
   };
 
-  const handleSaveChanges = () => {
-    if (!selectedMenu || !editableJson) return;
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setTextareaContent(value);
 
     try {
-      const updatedStructure = JSON.parse(editableJson);
-      const flattenedMenus = flattenMenuStructure(updatedStructure);
+      let updatedStructure;
 
-      // Supabase에 변환된 메뉴 구조로 할 일들 추가
-      createTodos(flattenedMenus);
-      setOpen(false);
+      if (value.trim().startsWith("[") || value.trim().startsWith("{")) {
+        updatedStructure = JSON.parse(value);
+      } else {
+        throw new Error("유효한 배열이나 객체 형식이 아닙니다.");
+      }
+
+      if (!Array.isArray(updatedStructure) && typeof updatedStructure !== 'object') {
+        throw new Error("입력된 데이터가 배열 또는 객체 형식이 아닙니다.");
+      }
+
+      setJsonError(null);
+      setSelectedMenu({ ...selectedMenu, menu_structure: updatedStructure });
     } catch (error) {
-      alert("유효한 JSON 형식이 아닙니다. 형식을 확인해 주세요.");
+      setJsonError("유효한 배열 또는 객체 형식이 아닙니다. 형식을 확인해 주세요.");
     }
   };
 
-  // 트리 구조에서 최상위 메뉴와 최하위 메뉴 쌍을 추출하는 함수
+  const handleUpdateClick = () => {
+    if (!selectedMenu) return;
+
+    try {
+      const menuStructure = typeof selectedMenu.menu_structure === 'string'
+        ? JSON.parse(selectedMenu.menu_structure)
+        : selectedMenu.menu_structure;
+
+      const flattenedMenus = flattenMenuStructure(menuStructure);
+      console.log('변환된 메뉴 구조:', JSON.stringify(flattenedMenus, null, 2));
+
+      createTodos(flattenedMenus);
+    } catch (error) {
+      console.error("메뉴 구조 처리 중 오류 발생:", error);
+    }
+  };
+
   const flattenMenuStructure = (menuItems: IMenuStructure[], firstMenu: string = ""): { first_menu: string; second_menu: string }[] => {
     let menuPairs: { first_menu: string; second_menu: string }[] = [];
 
@@ -136,7 +163,7 @@ const DialogButtonForMenuStructureListForSelect = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button variant="outline" size="sm" className="text-blue-600" onClick={handleSaveChanges}>
+                            <Button variant="outline" size="sm" className="text-blue-600" onClick={handleUpdateClick}>
                               반영
                             </Button>
                           </div>
@@ -164,12 +191,24 @@ const DialogButtonForMenuStructureListForSelect = () => {
                         최종 수정: {format(new Date(selectedMenu.updated_at), "yyyy-MM-dd")}
                       </p>
                     </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-blue-600"
+                      onClick={handleUpdateClick}
+                      disabled={!!jsonError}
+                    >
+                      반영
+                    </Button>
                   </div>
                   <Textarea
                     className="min-h-[600px] font-mono w-full"
-                    value={editableJson || ""}
-                    onChange={handleTextChange}
+                    value={textareaContent || ""}
+                    onChange={handleTextareaChange}
                   />
+                  {jsonError && (
+                    <p className="text-red-500 text-sm mt-2">{jsonError}</p>
+                  )}
                 </div>
               ) : (
                 <div className="h-[600px] flex items-center justify-center text-gray-500 border border-dashed border-gray-300 rounded-md">
