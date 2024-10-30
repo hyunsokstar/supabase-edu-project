@@ -1,15 +1,15 @@
 // src/hooks/useApiForCreateMultiTodosWithMenuArray.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiForCreateMultiTodosWithMenuArray } from '@/api/apiForTodos';
 import { IRequestTypeForApiForCreateMultiTodosWithMenuArray } from '@/type/typeForTodos';
 import { toast } from 'react-toastify';
+import { apiForMultiCreateTodosWithMenuArray } from '@/api/apiForTodos';
 
 const useApiForCreateMultiTodosWithMenuArray = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (menuData: IRequestTypeForApiForCreateMultiTodosWithMenuArray[]) =>
-      apiForCreateMultiTodosWithMenuArray(menuData),
+      apiForMultiCreateTodosWithMenuArray(menuData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['todoList'] });
       toast.success('모든 메뉴가 성공적으로 추가되었습니다.', {
