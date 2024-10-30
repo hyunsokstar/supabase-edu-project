@@ -1,3 +1,4 @@
+// src/app/todo-management/todo-dashboard/all-tasks/TodoListPage.tsx
 "use client";
 
 import React, { useState, useMemo } from 'react';
@@ -6,6 +7,7 @@ import { Edit, Trash } from 'lucide-react';
 import DialogButtonForCreateTodo from '@/components/Button/DialogButtonForCreateTodo';
 import { Skeleton } from '@/components/ui/skeleton';
 import useApiForGetTodoList from '@/hooks/useApiForTodoList';
+import useApiForDeleteTodo from '@/hooks/useApiForDeleteTodo';
 import DialogButtonForMenuStructureListForSelect from '@/app/DialogButtonForMenuStructureListForSelect';
 
 interface GroupedTodo {
@@ -16,6 +18,7 @@ interface GroupedTodo {
 
 const TodoListPage = () => {
     const { data: todoList, isLoading, error } = useApiForGetTodoList();
+    const deleteTodoMutation = useApiForDeleteTodo();
     const [selectedTodos, setSelectedTodos] = useState<number[]>([]);
 
     // first_menu 기준으로 그룹화된 데이터 생성
@@ -53,8 +56,8 @@ const TodoListPage = () => {
         return grouped;
     }, [todoList]);
 
-    const handleDeleteTodo = async (todoId: number) => {
-        console.log(`Deleting todo with id: ${todoId}`);
+    const handleDeleteTodo = (todoId: number) => {
+        deleteTodoMutation.mutate(todoId);
     };
 
     const handleCheckboxChange = (todoId: number) => {
