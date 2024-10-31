@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import useApiForGetTodoList from '@/hooks/useApiForTodoList';
 import useApiForDeleteTodo from '@/hooks/useApiForDeleteTodo';
 import DialogButtonForMenuStructureListForSelect from '@/app/DialogButtonForMenuStructureListForSelect';
+import useApiForUpdateTodoCompletion from '@/hooks/useApiForUpdateTodoCompletionStatus';
 
 interface GroupedTodo {
     firstMenu: string;
@@ -19,7 +20,9 @@ interface GroupedTodo {
 const TodoListPage = () => {
     const { data: todoList, isLoading, error } = useApiForGetTodoList();
     const deleteTodoMutation = useApiForDeleteTodo();
+    const updateTodoCompletionMutation = useApiForUpdateTodoCompletion();
     const [selectedTodos, setSelectedTodos] = useState<number[]>([]);
+    const [completedTodos, setCompletedTodos] = useState<{ [key: number]: boolean }>({});
 
     // first_menu 기준으로 그룹화된 데이터 생성
     const groupedTodos = useMemo(() => {
@@ -68,8 +71,12 @@ const TodoListPage = () => {
         );
     };
 
-    const handleCompletedChange = async (todoId: number) => {
-        // Todo 완료 상태 업데이트 로직
+    const handleCompletedChange = (todoId: number, isCompleted: boolean) => {
+        setCompletedTodos((prevCompleted) => ({
+            ...prevCompleted,
+            [todoId]: isCompleted
+        }));
+        updateTodoCompletionMutation.mutate({ todoId, isCompleted });
     };
 
     if (isLoading) {
@@ -141,8 +148,8 @@ const TodoListPage = () => {
                                         <td className="p-3 text-center border-r border-gray-300 hover:bg-gray-50">
                                             <input
                                                 type="checkbox"
-                                                checked={todo.is_completed}
-                                                onChange={() => handleCompletedChange(todo.id)}
+                                                checked={completedTodos[todo.id] ?? todo.is_completed}
+                                                onChange={() => handleCompletedChange(todo.id, !completedTodos[todo.id])}
                                                 className="form-checkbox h-5 w-5 text-green-600"
                                             />
                                         </td>

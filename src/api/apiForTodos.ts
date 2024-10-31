@@ -2,6 +2,27 @@ import { getSupabase } from '@/lib/supabaseClient';
 import useUserStore from '@/store/userStore';
 import { IRequestParameterForApiForCreateTodo, ITodoItem } from '@/type/typeForTodos';
 
+export const apiForUpdateTodoCompletion = async (todoId: number, isCompleted: boolean): Promise<boolean> => {
+    const supabase = getSupabase();
+    if (!supabase) {
+        console.error("Supabase 클라이언트 초기화 실패");
+        return false;
+    }
+    try {
+        const { error } = await supabase
+            .from('todos')
+            .update({ is_completed: isCompleted })
+            .eq('id', todoId);
+        if (error) {
+            throw error;
+        }
+        return true;
+    } catch (error) {
+        console.error("todo 완료 상태 업데이트 실패: ", error);
+        return false;
+    }
+};
+
 export const apiForMultiCreateTodosWithMenuArray = async (
     menuArray: { first_menu: string; second_menu: string }[]
 ) => {
