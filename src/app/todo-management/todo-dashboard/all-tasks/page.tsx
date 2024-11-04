@@ -1,15 +1,15 @@
-// src/app/todo-management/todo-dashboard/all-tasks/TodoListPage.tsx
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash } from 'lucide-react';
 import DialogButtonForCreateTodo from '@/components/Button/DialogButtonForCreateTodo';
 import { Skeleton } from '@/components/ui/skeleton';
-import useApiForGetTodoList from '@/hooks/useApiForTodoList';
 import useApiForDeleteTodo from '@/hooks/useApiForDeleteTodo';
 import DialogButtonForMenuStructureListForSelect from '@/app/DialogButtonForMenuStructureListForSelect';
 import useApiForUpdateTodoCompletionStatus from '@/hooks/useApiForUpdateTodoCompletionStatus';
+import useApiForGetTodoList from '@/hooks/useApiForTodoList';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface GroupedTodo {
     firstMenu: string;
@@ -18,19 +18,23 @@ interface GroupedTodo {
 }
 
 const TodoListPage = () => {
+    const queryClient = useQueryClient();
     const { data: todoList, isLoading, error } = useApiForGetTodoList();
     const deleteTodoMutation = useApiForDeleteTodo();
     const updateTodoCompletionMutation = useApiForUpdateTodoCompletionStatus();
     const [selectedTodos, setSelectedTodos] = useState<number[]>([]);
-    const [completedTodos, setCompletedTodos] = useState<{ [key: number]: boolean }>({});
+    const [groupedTodos, setGroupedTodos] = useState<GroupedTodo[]>([]);
 
-    const groupedTodos = useMemo(() => {
-        if (!todoList) return [];
+    useEffect(() => {
+        if (!todoList) {
+            setGroupedTodos([]);
+            return;
+        }
 
+        // 그룹핑 로직: todoList 변경 시마다 업데이트되도록 설정
         const grouped: GroupedTodo[] = [];
         let currentGroup: GroupedTodo | null = null;
 
-        // Grouping without sorting
         todoList.forEach((todo) => {
             if (!currentGroup || currentGroup.firstMenu !== todo.first_menu) {
                 if (currentGroup) {
@@ -51,11 +55,18 @@ const TodoListPage = () => {
             grouped.push(currentGroup);
         }
 
-        return grouped;
+        setGroupedTodos(grouped);
     }, [todoList]);
 
     const handleDeleteTodo = (todoId: number) => {
-        deleteTodoMutation.mutate(todoId);
+        deleteTodoMutation.mutate(todoId, {
+            onSuccess: () => {
+                // 할 일 삭제 후 데이터 쿼리 무효화하여 최신 상태 반영
+                setSelectedTodos((prevSelected) =>
+                    prevSelected.filter((id) => id !== todoId)
+                );
+            },
+        });
     };
 
     const handleCheckboxChange = (todoId: number) => {
@@ -67,11 +78,15 @@ const TodoListPage = () => {
     };
 
     const handleCompletedChange = (todoId: number, isCompleted: boolean) => {
-        setCompletedTodos((prevCompleted) => ({
-            ...prevCompleted,
-            [todoId]: isCompleted,
-        }));
-        updateTodoCompletionMutation.mutate({ todoId });
+        updateTodoCompletionMutation.mutate(
+            { todoId, isCompleted },
+            {
+                onSuccess: () => {
+                    // 완료 상태 업데이트 후 데이터 쿼리 무효화하여 최신 상태 반영
+                    queryClient.invalidateQueries(['todoList']);
+                },
+            }
+        );
     };
 
     if (isLoading) {
@@ -147,8 +162,8 @@ const TodoListPage = () => {
                                         <td className="p-3 text-center border-r border-gray-300 hover:bg-gray-50">
                                             <input
                                                 type="checkbox"
-                                                checked={completedTodos[todo.id] ?? todo.is_completed}
-                                                onChange={() => handleCompletedChange(todo.id, !completedTodos[todo.id])}
+                                                checked={todo.is_completed}
+                                                onChange={() => handleCompletedChange(todo.id, !todo.is_completed)}
                                                 className="form-checkbox h-5 w-5 text-green-600"
                                             />
                                         </td>

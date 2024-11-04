@@ -1,13 +1,19 @@
-// src/hooks/useApiForUpdateTodoCompletion.ts
+// src/hooks/useApiForUpdateTodoCompletionStatus.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiForUpdateTodoCompletion } from '@/api/apiForTodos';
 import { toast } from 'react-toastify';
+
+interface UpdateTodoParams {
+    todoId: number;
+    isCompleted: boolean;
+}
 
 const useApiForUpdateTodoCompletionStatus = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ todoId }: { todoId: number }) => apiForUpdateTodoCompletion(todoId),
+        // mutationFn을 수정하여 { todoId, isCompleted }를 받도록 설정
+        mutationFn: ({ todoId, isCompleted }: UpdateTodoParams) => apiForUpdateTodoCompletion(todoId, isCompleted),
         onSuccess: () => {
             // 데이터가 성공적으로 업데이트되면, todoList 데이터를 즉시 리패칭
             queryClient.refetchQueries({ queryKey: ['todoList'] });

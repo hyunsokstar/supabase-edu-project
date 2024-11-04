@@ -1,38 +1,30 @@
 import { getSupabase } from '@/lib/supabaseClient';
+import { PostgrestError } from '@supabase/supabase-js';
+
 import useUserStore from '@/store/userStore';
 import { IRequestParameterForApiForCreateTodo, ITodoItem } from '@/type/typeForTodos';
 
-export const apiForUpdateTodoCompletion = async (todoId: number): Promise<boolean> => {
+export const apiForUpdateTodoCompletion = async (todoId: number, isCompleted: boolean): Promise<boolean> => {
     const supabase = getSupabase();
     if (!supabase) {
         console.error("Supabase 클라이언트 초기화 실패");
         return false;
     }
+
     try {
-        // 현재 상태를 조회합니다.
-        const { data, error: fetchError } = await supabase
+        // 1. 전달된 isCompleted 값으로 todo 항목을 업데이트합니다
+        const { data: updatedTodo, error: updateError }: { data: any, error: PostgrestError | null } = await supabase
             .from('todos')
-            .select('is_completed')
+            .update({ is_completed: isCompleted })
             .eq('id', todoId)
+            .select('is_completed')
             .single();
-
-        if (fetchError) {
-            throw fetchError;
-        }
-
-        // 현재 상태를 반대로 설정합니다.
-        const newCompletionStatus = !data?.is_completed;
-
-        // 상태를 업데이트합니다.
-        const { error: updateError } = await supabase
-            .from('todos')
-            .update({ is_completed: newCompletionStatus })
-            .eq('id', todoId);
 
         if (updateError) {
             throw updateError;
         }
 
+        console.log(`Todo ID ${todoId}의 새로운 완료 상태:`, updatedTodo?.is_completed);
         return true;
     } catch (error) {
         console.error("todo 완료 상태 업데이트 실패 발생: ", error);

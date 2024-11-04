@@ -7,6 +7,7 @@ const useApiForGetTodoList = () => {
     const { data, isLoading, error, ...query } = useQuery({
         queryKey: ['todoList'],
         queryFn: apiForGetTodoList,
+        staleTime: 0, // stale 상태가 되자마자 항상 새로운 데이터를 가져오도록 설정
     });
 
     useEffect(() => {
