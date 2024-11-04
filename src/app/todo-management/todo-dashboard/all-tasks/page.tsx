@@ -80,12 +80,6 @@ const TodoListPage = () => {
     const handleCompletedChange = (todoId: number, isCompleted: boolean) => {
         updateTodoCompletionMutation.mutate(
             { todoId, isCompleted },
-            {
-                onSuccess: () => {
-                    // 완료 상태 업데이트 후 데이터 쿼리 무효화하여 최신 상태 반영
-                    queryClient.invalidateQueries(['todoList']);
-                },
-            }
         );
     };
 
