@@ -71,7 +71,7 @@ const TodoListPage = () => {
             ...prevCompleted,
             [todoId]: isCompleted,
         }));
-        updateTodoCompletionMutation.mutate({ todoId, isCompleted });
+        updateTodoCompletionMutation.mutate({ todoId });
     };
 
     if (isLoading) {
