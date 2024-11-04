@@ -16,7 +16,10 @@ const useApiForUpdateTodoCompletionStatus = () => {
         mutationFn: ({ todoId, isCompleted }: UpdateTodoParams) => apiForUpdateTodoCompletion(todoId, isCompleted),
         onSuccess: () => {
             // 데이터가 성공적으로 업데이트되면, todoList 데이터를 즉시 리패칭
-            queryClient.refetchQueries({ queryKey: ['todoList'] });
+            queryClient.refetchQueries({
+                queryKey: ['todoList'],
+                exact: true
+            });
             toast.success('할 일의 완료 상태가 성공적으로 업데이트되었습니다.', {
                 position: "top-right",
                 autoClose: 3000,
