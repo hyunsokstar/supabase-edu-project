@@ -1,0 +1,13 @@
+// C:\Users\terec\supabase-edu-project\.eslintrc.json
+{
+  "extends": [
+    "next/core-web-vitals",
+    "next/typescript"
+  ],
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "off", // any 타입 허용
+    "@typescript-eslint/no-unused-vars": "warn", // 사용하지 않는 변수는 경고로 표시
+    "@next/next/no-img-element": "off", // <img> 대신 <Image /> 권고 비활성화
+    "@typescript-eslint/no-empty-object-type": "off" // 빈 객체 타입 허용
+  }
+}
