@@ -24,7 +24,6 @@ const TodoListPage = () => {
     const [selectedTodos, setSelectedTodos] = useState<number[]>([]);
     const [completedTodos, setCompletedTodos] = useState<{ [key: number]: boolean }>({});
 
-    // Group data by first_menu without sorting
     const groupedTodos = useMemo(() => {
         if (!todoList) return [];
 
