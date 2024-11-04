@@ -35,7 +35,7 @@ export const apiForUpdateTodoCompletion = async (todoId: number): Promise<boolea
 
         return true;
     } catch (error) {
-        console.error("todo 완료 상태 업데이트 실패: ", error);
+        console.error("todo 완료 상태 업데이트 실패 발생: ", error);
         return false;
     }
 };
