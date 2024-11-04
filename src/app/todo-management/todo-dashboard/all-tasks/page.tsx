@@ -24,14 +24,14 @@ const TodoListPage = () => {
     const [selectedTodos, setSelectedTodos] = useState<number[]>([]);
     const [completedTodos, setCompletedTodos] = useState<{ [key: number]: boolean }>({});
 
-    // first_menu 기준으로 그룹화된 데이터 생성 (정렬 제거)
+    // Group data by first_menu without sorting
     const groupedTodos = useMemo(() => {
         if (!todoList) return [];
 
         const grouped: GroupedTodo[] = [];
         let currentGroup: GroupedTodo | null = null;
 
-        // 정렬 없이 원래 순서대로 그룹화
+        // Grouping without sorting
         todoList.forEach((todo) => {
             if (!currentGroup || currentGroup.firstMenu !== todo.first_menu) {
                 if (currentGroup) {
@@ -40,7 +40,7 @@ const TodoListPage = () => {
                 currentGroup = {
                     firstMenu: todo.first_menu,
                     rowspan: 1,
-                    todos: [todo]
+                    todos: [todo],
                 };
             } else {
                 currentGroup.rowspan++;
@@ -70,7 +70,7 @@ const TodoListPage = () => {
     const handleCompletedChange = (todoId: number, isCompleted: boolean) => {
         setCompletedTodos((prevCompleted) => ({
             ...prevCompleted,
-            [todoId]: isCompleted
+            [todoId]: isCompleted,
         }));
         updateTodoCompletionMutation.mutate({ todoId, isCompleted });
     };
@@ -100,12 +100,12 @@ const TodoListPage = () => {
             <div className="flex justify-between items-center mb-4">
                 <p className="text-sm text-gray-500">총 {todoList?.length || 0}개의 할 일이 있습니다.</p>
                 {selectedTodos.length > 0 && (
-                    <Button
+                    <div
                         onClick={() => console.log('Deleting selected todos:', selectedTodos)}
-                        className="bg-red-600 hover:bg-red-700 text-white"
+                        className="bg-red-600 hover:bg-red-700 text-white p-2 rounded cursor-pointer"
                     >
                         선택한 항목 삭제
-                    </Button>
+                    </div>
                 )}
             </div>
 
@@ -123,7 +123,7 @@ const TodoListPage = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {groupedTodos.map((group, groupIndex) => (
+                            {groupedTodos.map((group) =>
                                 group.todos.map((todo, todoIndex) => (
                                     <tr key={todo.id} className="border-b last:border-0">
                                         <td className="p-3 text-center border-r border-gray-300 hover:bg-gray-50">
@@ -135,11 +135,16 @@ const TodoListPage = () => {
                                             />
                                         </td>
                                         {todoIndex === 0 && (
-                                            <td className="p-3 text-center border-r border-gray-300 hover:bg-gray-50" rowSpan={group.rowspan}>
+                                            <td
+                                                className="p-3 text-center border-r border-gray-300 hover:bg-gray-50"
+                                                rowSpan={group.rowspan}
+                                            >
                                                 {group.firstMenu || 'N/A'}
                                             </td>
                                         )}
-                                        <td className="p-3 text-center border-r border-gray-300 hover:bg-gray-50">{todo.second_menu || 'N/A'}</td>
+                                        <td className="p-3 text-center border-r border-gray-300 hover:bg-gray-50">
+                                            {todo.second_menu || 'N/A'}
+                                        </td>
                                         <td className="p-3 text-center border-r border-gray-300 hover:bg-gray-50">
                                             <input
                                                 type="checkbox"
@@ -157,22 +162,26 @@ const TodoListPage = () => {
                                         </td>
                                         <td className="p-3 text-center border-r border-gray-300 hover:bg-gray-50">
                                             <div className="flex items-center justify-center space-x-2">
-                                                <Button variant="ghost" size="icon" className="text-blue-500 hover:text-blue-700">
-                                                    <Edit className="w-5 h-5" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-red-500 hover:text-red-700"
-                                                    onClick={() => handleDeleteTodo(todo.id)}
-                                                >
-                                                    <Trash className="w-5 h-5" />
-                                                </Button>
+                                                <div className="text-blue-500 hover:text-blue-700">
+                                                    <Button variant="ghost" size="icon">
+                                                        <Edit size={20} />
+                                                    </Button>
+                                                </div>
+                                                <div className="text-red-500 hover:text-red-700">
+                                                    <div onClick={() => handleDeleteTodo(todo.id)}>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                        >
+                                                            <Trash size={20} />
+                                                        </Button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>
                                 ))
-                            ))}
+                            )}
                         </tbody>
                     </table>
                 ) : (

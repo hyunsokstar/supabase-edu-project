@@ -7,8 +7,8 @@ const useApiForGetTodoList = () => {
     const { data, isLoading, error, ...query } = useQuery({
         queryKey: ['todoList'],
         queryFn: apiForGetTodoList,
-        retry: 1,
-        networkMode: 'always',
+        // retry: 1,
+        // networkMode: 'always',
     });
 
     useEffect(() => {
