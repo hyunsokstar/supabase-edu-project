@@ -9,7 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import useApiForGetTodoList from '@/hooks/useApiForTodoList';
 import useApiForDeleteTodo from '@/hooks/useApiForDeleteTodo';
 import DialogButtonForMenuStructureListForSelect from '@/app/DialogButtonForMenuStructureListForSelect';
-import useApiForUpdateTodoCompletion from '@/hooks/useApiForUpdateTodoCompletionStatus';
+import useApiForUpdateTodoCompletionStatus from '@/hooks/useApiForUpdateTodoCompletionStatus';
 
 interface GroupedTodo {
     firstMenu: string;
@@ -20,7 +20,7 @@ interface GroupedTodo {
 const TodoListPage = () => {
     const { data: todoList, isLoading, error } = useApiForGetTodoList();
     const deleteTodoMutation = useApiForDeleteTodo();
-    const updateTodoCompletionMutation = useApiForUpdateTodoCompletion();
+    const updateTodoCompletionMutation = useApiForUpdateTodoCompletionStatus();
     const [selectedTodos, setSelectedTodos] = useState<number[]>([]);
     const [completedTodos, setCompletedTodos] = useState<{ [key: number]: boolean }>({});
 

@@ -3,15 +3,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiForUpdateTodoCompletion } from '@/api/apiForTodos';
 import { toast } from 'react-toastify';
 
-const useApiForUpdateTodoCompletion = () => {
+const useApiForUpdateTodoCompletionStatus = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ todoId }: { todoId: number }) =>
-            apiForUpdateTodoCompletion(todoId), // `isCompleted` 인수도 전달
+        mutationFn: ({ todoId }: { todoId: number }) => apiForUpdateTodoCompletion(todoId),
         onSuccess: () => {
-            // Todo 리스트 캐시 무효화 및 데이터 재요청
-            queryClient.invalidateQueries({ queryKey: ['todoList'] });
+            // 데이터가 성공적으로 업데이트되면, todoList 데이터를 즉시 리패칭
+            queryClient.refetchQueries({ queryKey: ['todoList'] });
             toast.success('할 일의 완료 상태가 성공적으로 업데이트되었습니다.', {
                 position: "top-right",
                 autoClose: 3000,
@@ -27,4 +26,4 @@ const useApiForUpdateTodoCompletion = () => {
     });
 };
 
-export default useApiForUpdateTodoCompletion;
+export default useApiForUpdateTodoCompletionStatus;
