@@ -12,7 +12,6 @@ export const apiForUpdateTodoCompletion = async (todoId: number, isCompleted: bo
     }
 
     try {
-        // 1. 전달된 isCompleted 값으로 todo 항목을 업데이트합니다
         const { data: updatedTodo, error: updateError }: { data: any, error: PostgrestError | null } = await supabase
             .from('todos')
             .update({ is_completed: isCompleted })
