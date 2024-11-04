@@ -4,8 +4,7 @@ import { IUserRow, UpdateUserInfoParams } from '@/type/typeForUser';
 
 // 모든 사용자 목록을 가져오는 API
 export const fetchAllUserList = async (): Promise<IUserRow[]> => {
-    const supabase = getSupabase();
-
+    const supabase = await getSupabase();
     if (!supabase) {
         throw new Error('Supabase Client를 초기화할 수 없습니다.');
     }
@@ -42,10 +41,9 @@ export const fetchAllUserList = async (): Promise<IUserRow[]> => {
     }));
 };
 
-
 // 사용자 삭제 API 로직 추가
 export const deleteUser = async (userId: string): Promise<{ message: string }> => {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     if (!supabase) {
         throw new Error('Supabase Client를 초기화할 수 없습니다.');
     }
@@ -76,7 +74,7 @@ export const apiForUpdateUserInfo = async ({
     todayCompletedTasksCount,
     currentTask
 }: UpdateUserInfoParams): Promise<string | null> => {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     if (!supabase) {
         throw new Error('Supabase 초기화 실패');
     }

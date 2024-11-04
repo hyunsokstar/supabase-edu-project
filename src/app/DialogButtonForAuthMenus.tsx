@@ -1,4 +1,3 @@
-// src/components/DialogButtonForAuthMenus.tsx
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -15,27 +14,37 @@ import {
 import { LogOut, User as UserIcon } from 'lucide-react';
 import DialogButtonForLoginToSupabase from '@/components/Button/DialogButtonForLoginToSupabase';
 import DialogButtonForSignUpToSupabase from '@/components/Button/DialogButtonForSignUpToSupabase';
-import useUserStore from '@/store/userStore'; // Zustand 스토어 import
-import getSupabase from '@/lib/supabaseClient'; // Supabase 클라이언트 가져오기
+import useUserStore from '@/store/userStore';
+import getSupabase from '@/lib/supabaseClient';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 const DialogButtonForAuthMenus: React.FC = () => {
     const { id, email, isLoggedIn, setUser, clearUser } = useUserStore();
     const [userImage, setUserImage] = useState<string | null>(null);
     const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
-    const supabase = getSupabase(); // Supabase 클라이언트 가져오기
+    const [supabaseClient, setSupabaseClient] = useState<SupabaseClient | null>(null);
+
+    // Supabase 클라이언트 초기화
+    useEffect(() => {
+        const initSupabase = async () => {
+            const client = await getSupabase();
+            setSupabaseClient(client);
+        };
+        initSupabase();
+    }, []);
 
     // auth listener 설정
     useEffect(() => {
-        if (!supabase) return;
+        if (!supabaseClient) return;
 
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        const { data: authListener } = supabaseClient.auth.onAuthStateChange(async (event, session) => {
             console.log("Auth State Change Event:", event);
             const user = session?.user;
             if (user) {
                 setUser({ id: user.id ?? null, email: user.email ?? null });
 
                 // profile 테이블에서 user_image와 phone_number 가져오기
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('profile')
                     .select('user_image, phone_number')
                     .eq('user_id', user.id)
@@ -58,22 +67,22 @@ const DialogButtonForAuthMenus: React.FC = () => {
         return () => {
             authListener.subscription.unsubscribe();
         };
-    }, [setUser, clearUser, supabase]);
+    }, [setUser, clearUser, supabaseClient]);
 
     const handleLogout = useCallback(async () => {
-        if (!supabase) return;
+        if (!supabaseClient) return;
 
         try {
-            await supabase.auth.signOut();
+            await supabaseClient.auth.signOut();
             clearUser();
             setUserImage(null);
             setPhoneNumber(null);
         } catch (error: any) {
             console.error("로그아웃 실패:", error.message);
         }
-    }, [supabase, clearUser]);
+    }, [supabaseClient, clearUser]);
 
-    if (!supabase) return null;
+    if (!supabaseClient) return null;
 
     return (
         <div>
@@ -82,7 +91,6 @@ const DialogButtonForAuthMenus: React.FC = () => {
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 rounded-full">
                             <Avatar className="h-8 w-8">
-                                {/* 프로필 이미지가 있으면 출력하고, 없으면 대체 이미지 표시 */}
                                 {userImage ? (
                                     <AvatarImage src={userImage} alt="User Profile Image" />
                                 ) : (

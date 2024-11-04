@@ -1,11 +1,11 @@
 import { getSupabase } from '@/lib/supabaseClient';
 import { PostgrestError } from '@supabase/supabase-js';
-
 import useUserStore from '@/store/userStore';
 import { IRequestParameterForApiForCreateTodo, ITodoItem } from '@/type/typeForTodos';
 
+// Todo 완료 상태 업데이트 API
 export const apiForUpdateTodoCompletion = async (todoId: number, isCompleted: boolean): Promise<boolean> => {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     if (!supabase) {
         console.error("Supabase 클라이언트 초기화 실패");
         return false;
@@ -33,30 +33,25 @@ export const apiForUpdateTodoCompletion = async (todoId: number, isCompleted: bo
     }
 };
 
-
 // 메뉴 구조에서 1차, 2차 메뉴를 추출하는 함수
 const extractMenuArray = (menu: any): { first_menu: string; second_menu: string }[] => {
     let result: { first_menu: string; second_menu: string }[] = [];
 
     const processMenu = (item: any) => {
-        // item에 items가 있는 경우 재귀적으로 처리
         if (item.items && Array.isArray(item.items)) {
             item.items.forEach((subItem: any) => {
                 if (subItem.items && Array.isArray(subItem.items)) {
-                    // 더 하위 메뉴가 있으면 재귀 처리
                     processMenu(subItem);
                 } else {
-                    // 최하위 메뉴인 경우
                     result.push({
-                        first_menu: menu.name, // 최상위 메뉴 이름 사용
-                        second_menu: subItem.name // 최하위 메뉴 이름
+                        first_menu: menu.name,
+                        second_menu: subItem.name
                     });
                 }
             });
         }
     };
 
-    // 최상위 메뉴의 items부터 처리 시작
     if (menu.items && Array.isArray(menu.items)) {
         menu.items.forEach((item: any) => {
             processMenu(item);
@@ -67,23 +62,18 @@ const extractMenuArray = (menu: any): { first_menu: string; second_menu: string 
     return result;
 };
 
-// API 함수
-export const apiForMultiCreateTodosWithMenuArray = async (
-    menuJson: any // JSON 메뉴 구조 전체를 전달
-) => {
-    const supabase = getSupabase();
+// 여러 Todos 생성 API
+export const apiForMultiCreateTodosWithMenuArray = async (menuJson: any) => {
+    const supabase = await getSupabase();
     const userStore = useUserStore.getState();
 
-    // 현재 로그인된 사용자 ID 가져오기
     const userId = userStore?.id;
     if (!userId) {
         console.error("사용자 ID를 찾을 수 없습니다. 로그인이 필요합니다.");
         return { error: "사용자 인증 실패" };
     }
 
-    // 트랜잭션 시작
     try {
-        // 1. 먼저 현재 사용자의 모든 todo 삭제
         const { error: deleteError } = await supabase
             .from('todos')
             .delete()
@@ -94,9 +84,8 @@ export const apiForMultiCreateTodosWithMenuArray = async (
             return { error: deleteError };
         }
 
-        // 2. 새로운 todo 항목들 추가
         const menuArray = extractMenuArray(menuJson);
-        console.log('변환된 메뉴 구조:', menuArray); // 디버깅용 로그
+        console.log('변환된 메뉴 구조:', menuArray);
 
         const todosToInsert = menuArray.map((menu) => ({
             user_id: userId,
@@ -126,9 +115,9 @@ export const apiForMultiCreateTodosWithMenuArray = async (
     }
 };
 
-
+// Todo 리스트 조회 API
 export const apiForGetTodoList = async (): Promise<ITodoItem[]> => {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     if (!supabase) {
         throw new Error('Supabase 초기화 실패');
     }
@@ -155,8 +144,8 @@ export const apiForGetTodoList = async (): Promise<ITodoItem[]> => {
                 )
             )
         `)
-        .order('id', { ascending: true })  // created_at 기준 오름차순 정렬
-        .order('created_at', { ascending: true }); // created_at 기준 오름차순 정렬
+        .order('id', { ascending: true })
+        .order('created_at', { ascending: true });
 
     if (error) {
         throw new Error(`Todo 리스트를 불러오는 중 오류가 발생했습니다: ${error.message}`);
@@ -167,16 +156,13 @@ export const apiForGetTodoList = async (): Promise<ITodoItem[]> => {
     return data as unknown as ITodoItem[];
 };
 
-
-
-
+// Todo 생성 API
 export const apiForCreateTodo = async (todo: IRequestParameterForApiForCreateTodo): Promise<void> => {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     if (!supabase) {
         throw new Error('Supabase 초기화 실패');
     }
 
-    // 현재 세션의 사용자 ID를 가져옴
     const { data: user, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
         throw new Error('로그인된 사용자가 없습니다.');
@@ -190,7 +176,7 @@ export const apiForCreateTodo = async (todo: IRequestParameterForApiForCreateTod
             title: todo.title,
             description: todo.description,
             is_completed: todo.is_completed,
-            user_id: userId, // user_id를 명시적으로 설정
+            user_id: userId,
         });
 
     if (error) {
@@ -198,38 +184,29 @@ export const apiForCreateTodo = async (todo: IRequestParameterForApiForCreateTod
     }
 };
 
-
-
-
-// todo 삭제 with id
+// Todo 삭제 API
 export const apiForDeleteTodo = async (todoId: number): Promise<void> => {
     console.log("todoId:", todoId);
 
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
     if (!supabase) {
         throw new Error('Supabase 초기화 실패');
     }
 
-    // Supabase의 RLS 정책이 삭제 권한을 처리하므로 추가적인 확인이 필요하지 않음
     const { data, error } = await supabase
         .from('todos')
         .delete()
         .eq('id', todoId)
-        .select(); // 삭제된 데이터를 반환하여 실제 삭제 여부 확인
+        .select();
 
     if (error) {
         console.error('Error deleting todo:', error);
         throw new Error(`Todo 삭제 중 오류가 발생했습니다: ${error.message}`);
     }
 
-    // 삭제된 데이터가 없으면 권한이 없는 것임
     if (!data || data.length === 0) {
         throw new Error('이 Todo를 삭제할 권한이 없거나 존재하지 않는 Todo입니다.');
     }
 
     console.log("Todo successfully deleted:", data);
 };
-
-
-// todo 리스트 조회
-

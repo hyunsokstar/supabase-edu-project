@@ -1,14 +1,15 @@
 // src/api/apiForMenuAdmin.ts
 import getSupabase from '@/lib/supabaseClient';
-import { 
-  IMenuStructure, 
+import {
+  IMenuStructure,
   IResponseSingleMenuStructure,
   IRequestParameterForApiForCreateMenuStructure,
   IRequestParameterForApiForUpdateMenuStructure
 } from '@/type/typeForMenuStructure';
 
+// 메뉴 구조 목록을 가져오는 API
 export const apiForGetMenuStructureList = async (): Promise<IMenuStructure[]> => {
-  const supabase = getSupabase();
+  const supabase = await getSupabase();
   if (!supabase) {
     throw new Error('Supabase 초기화 실패');
   }
@@ -43,9 +44,13 @@ export const apiForGetMenuStructureList = async (): Promise<IMenuStructure[]> =>
   return data as unknown as IMenuStructure[];
 };
 
+// 특정 메뉴 구조를 가져오는 API
 export async function apiForGetMenuStructure(id: number): Promise<IResponseSingleMenuStructure> {
   try {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
+    if (!supabase) {
+      throw new Error('Supabase 초기화 실패');
+    }
 
     const { data, error } = await supabase
       .from('menu_structures')
@@ -85,11 +90,15 @@ export async function apiForGetMenuStructure(id: number): Promise<IResponseSingl
   }
 }
 
+// 새로운 메뉴 구조를 생성하는 API
 export async function apiForCreateMenuStructure(
   params: IRequestParameterForApiForCreateMenuStructure
 ): Promise<IResponseSingleMenuStructure> {
   try {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
+    if (!supabase) {
+      throw new Error('Supabase 초기화 실패');
+    }
 
     const { data, error } = await supabase
       .from('menu_structures')
@@ -116,11 +125,15 @@ export async function apiForCreateMenuStructure(
   }
 }
 
+// 메뉴 구조를 업데이트하는 API
 export async function apiForUpdateMenuStructure(
   params: IRequestParameterForApiForUpdateMenuStructure
 ): Promise<IResponseSingleMenuStructure> {
   try {
-    const supabase = getSupabase();
+    const supabase = await getSupabase();
+    if (!supabase) {
+      throw new Error('Supabase 초기화 실패');
+    }
     const { id, ...updateData } = params;
 
     const { data, error } = await supabase
