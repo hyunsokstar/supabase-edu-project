@@ -7,11 +7,11 @@ const useApiForUpdateTodoCompletion = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ todoId, isCompleted }: { todoId: number, isCompleted: boolean }) =>
-            apiForUpdateTodoCompletion(todoId),
+        mutationFn: ({ todoId }: { todoId: number }) =>
+            apiForUpdateTodoCompletion(todoId), // `isCompleted` 인수도 전달
         onSuccess: () => {
-            // Todo 리스트 캐시 무효화
-            queryClient.refetchQueries({ queryKey: ['todoList'] });
+            // Todo 리스트 캐시 무효화 및 데이터 재요청
+            queryClient.invalidateQueries({ queryKey: ['todoList'] });
             toast.success('할 일의 완료 상태가 성공적으로 업데이트되었습니다.', {
                 position: "top-right",
                 autoClose: 3000,
