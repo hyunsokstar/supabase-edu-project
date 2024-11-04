@@ -154,6 +154,7 @@ export const apiForGetTodoList = async (): Promise<ITodoItem[]> => {
             )
         `)
         .order('id', { ascending: true })  // created_at 기준 오름차순 정렬
+        .order('created_at', { ascending: true }); // created_at 기준 오름차순 정렬
 
     if (error) {
         throw new Error(`Todo 리스트를 불러오는 중 오류가 발생했습니다: ${error.message}`);
