@@ -11,6 +11,8 @@ export const apiForUpdateTodoCompletion = async (todoId: number, isCompleted: bo
         return false;
     }
 
+    console.log("isCompleted check at apiForUpdateTodoCompletion : ", isCompleted);
+
     try {
         const { data: updatedTodo, error: updateError }: { data: any, error: PostgrestError | null } = await supabase
             .from('todos')
